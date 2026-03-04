@@ -1,0 +1,19 @@
+{
+  "name": "elpx-docx",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "bun --watch src/index.ts",
+    "start": "bun src/index.ts",
+    "check": "bunx tsc --noEmit"
+  },
+  "dependencies": {
+    "@turbodocx/html-to-docx": "^1.14.0",
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.3.0",
+    "typescript": "^5.9.3"
+  }
+}
