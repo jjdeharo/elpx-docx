@@ -10,8 +10,8 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "fflate": "^0.8.2",
-    "html-docx-js-typescript": "^0.1.5"
+    "docx": "^9.6.0",
+    "fflate": "^0.8.2"
   },
   "devDependencies": {
     "typescript": "^5.9.3",

@@ -1,5 +1,17 @@
+import {
+  Document as DocxDocument,
+  HeadingLevel,
+  Packer,
+  Paragraph,
+  Table,
+  TableCell,
+  TableRow,
+  TextRun,
+  WidthType,
+  type ISectionOptions,
+  type ParagraphChild,
+} from 'docx';
 import { unzipSync } from 'fflate';
-import { asBlob } from 'html-docx-js-typescript';
 
 export interface ConvertProgress {
   phase: 'read' | 'parse' | 'render' | 'docx';
@@ -34,6 +46,14 @@ interface AssetEntry {
   mime: string;
 }
 
+interface InlineStyle {
+  bold?: boolean;
+  italics?: boolean;
+  underline?: {};
+  font?: string;
+  color?: string;
+}
+
 const ASSET_DIRECTORIES = ['resources', 'images', 'media', 'files', 'attachments'];
 const SYSTEM_FILES = new Set(['content.xml', 'contentv3.xml', 'content.data', 'content.xsd', 'imsmanifest.xml']);
 
@@ -53,8 +73,7 @@ export async function convertElpxToDocx(
   const html = buildHtmlDocument(project, assets);
 
   onProgress?.({ phase: 'docx', message: 'Generando el documento .docx...' });
-  const generated = await asBlob(html);
-  const blob = generated instanceof Blob ? generated : new Blob([generated]);
+  const blob = await buildCompatibleDocx(project, assets);
 
   return {
     blob,
@@ -62,6 +81,51 @@ export async function convertElpxToDocx(
     html,
     pageCount: project.pages.length,
   };
+}
+
+async function buildCompatibleDocx(project: ParsedProject, assets: Map<string, AssetEntry>): Promise<Blob> {
+  const children: Array<Paragraph | Table> = [
+    new Paragraph({
+      text: project.title,
+      heading: HeadingLevel.TITLE,
+    }),
+  ];
+
+  if (project.subtitle) {
+    children.push(
+      new Paragraph({
+        children: [new TextRun({ text: project.subtitle, italics: true })],
+        spacing: { after: 260 },
+      }),
+    );
+  }
+
+  for (const page of project.pages) {
+    children.push(
+      new Paragraph({
+        text: page.title,
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 280, after: 180 },
+      }),
+    );
+
+    const content = sanitizeHtmlFragment(page.contentHtml, assets);
+    const blocks = convertHtmlToDocxBlocks(content);
+    if (blocks.length === 0) {
+      children.push(new Paragraph({ text: 'Sin contenido exportable.' }));
+      continue;
+    }
+
+    children.push(...blocks);
+  }
+
+  if (project.pages.length === 0) {
+    children.push(new Paragraph({ text: 'El proyecto no contiene páginas exportables.' }));
+  }
+
+  const sections: ISectionOptions[] = [{ children }];
+  const document = new DocxDocument({ sections });
+  return Packer.toBlob(document);
 }
 
 function parseProject(entries: Record<string, Uint8Array>): ParsedProject {
@@ -170,6 +234,267 @@ ${content}
   ${sections || '<p>El proyecto no contiene contenido exportable.</p>'}
 </body>
 </html>`;
+}
+
+function convertHtmlToDocxBlocks(contentHtml: string): Array<Paragraph | Table> {
+  if (!contentHtml.trim()) {
+    return [];
+  }
+
+  const htmlDoc = new DOMParser().parseFromString(`<body>${contentHtml}</body>`, 'text/html');
+  const body = htmlDoc.body;
+  const blocks: Array<Paragraph | Table> = [];
+  let orderedListIndex = 1;
+
+  for (const node of Array.from(body.childNodes)) {
+    blocks.push(...convertBlockNode(node, { listDepth: 0, listType: null, orderedIndex: orderedListIndex }));
+
+    if (node instanceof HTMLOListElement) {
+      orderedListIndex += Array.from(node.children).filter(child => child.tagName === 'LI').length;
+    } else {
+      orderedListIndex = 1;
+    }
+  }
+
+  return blocks;
+}
+
+function convertBlockNode(
+  node: Node,
+  context: { listDepth: number; listType: 'ul' | 'ol' | null; orderedIndex: number },
+): Array<Paragraph | Table> {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = normalizeWhitespace(node.textContent || '');
+    return text ? [new Paragraph({ children: [new TextRun(text)] })] : [];
+  }
+
+  if (!(node instanceof HTMLElement)) {
+    return [];
+  }
+
+  const tag = node.tagName.toLowerCase();
+
+  if (tag === 'table') {
+    return [convertTable(node)];
+  }
+
+  if (tag === 'ul' || tag === 'ol') {
+    const items: Array<Paragraph | Table> = [];
+    let itemIndex = 1;
+
+    for (const child of Array.from(node.children)) {
+      if (child.tagName.toLowerCase() !== 'li') {
+        continue;
+      }
+
+      items.push(...convertListItem(child, tag as 'ul' | 'ol', context.listDepth, itemIndex));
+      itemIndex += 1;
+    }
+
+    return items;
+  }
+
+  if (tag === 'li') {
+    return convertListItem(node, context.listType || 'ul', context.listDepth, context.orderedIndex);
+  }
+
+  const heading = getHeadingLevel(tag);
+  const paragraphChildren = inlineChildrenFromNode(node);
+
+  if (paragraphChildren.length === 0) {
+    const text = normalizeWhitespace(node.textContent || '');
+    if (!text) {
+      return [];
+    }
+    paragraphChildren.push(new TextRun(text));
+  }
+
+  if (tag === 'hr') {
+    return [new Paragraph({ text: ' ' })];
+  }
+
+  return [
+    new Paragraph({
+      heading,
+      children: paragraphChildren,
+      spacing: { after: tag.startsWith('h') ? 180 : 120 },
+    }),
+  ];
+}
+
+function convertListItem(
+  node: Element,
+  listType: 'ul' | 'ol',
+  listDepth: number,
+  itemIndex: number,
+): Array<Paragraph | Table> {
+  const blocks: Array<Paragraph | Table> = [];
+  const prefix = listType === 'ol' ? `${itemIndex}. ` : `${'  '.repeat(listDepth)}• `;
+
+  const inlineNodes = Array.from(node.childNodes).filter(
+    child => !(child instanceof HTMLElement) || !['ul', 'ol', 'table'].includes(child.tagName.toLowerCase()),
+  );
+  const paragraphChildren = inlineNodes.flatMap(child => inlineChildrenFromNode(child));
+
+  if (paragraphChildren.length > 0) {
+    blocks.push(
+      new Paragraph({
+        children: [new TextRun(prefix), ...paragraphChildren],
+        spacing: { after: 80 },
+      }),
+    );
+  }
+
+  for (const child of Array.from(node.children)) {
+    const tag = child.tagName.toLowerCase();
+    if (!['ul', 'ol', 'table'].includes(tag)) {
+      continue;
+    }
+
+    blocks.push(
+      ...convertBlockNode(child, {
+        listDepth: listDepth + 1,
+        listType: tag === 'ul' || tag === 'ol' ? (tag as 'ul' | 'ol') : listType,
+        orderedIndex: 1,
+      }),
+    );
+  }
+
+  return blocks;
+}
+
+function convertTable(tableElement: HTMLElement): Table {
+  const rows = Array.from(tableElement.querySelectorAll('tr')).map(
+    row =>
+      new TableRow({
+        children: Array.from(row.children)
+          .filter(cell => ['td', 'th'].includes(cell.tagName.toLowerCase()))
+          .map(
+            cell =>
+              new TableCell({
+                width: { size: 100 / Math.max(1, row.children.length), type: WidthType.PERCENTAGE },
+                children: buildTableCellChildren(cell),
+              }),
+          ),
+      }),
+  );
+
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    rows:
+      rows.length > 0
+        ? rows
+        : [new TableRow({ children: [new TableCell({ children: [new Paragraph({ text: '' })] })] })],
+  });
+}
+
+function buildTableCellChildren(cell: Element): Paragraph[] {
+  const children: Paragraph[] = [];
+  const directElements = Array.from(cell.childNodes);
+
+  for (const child of directElements) {
+    if (child instanceof HTMLTableElement) {
+      continue;
+    }
+
+    if (child instanceof HTMLElement && ['p', 'div', 'ul', 'ol', 'li'].includes(child.tagName.toLowerCase())) {
+      children.push(...convertBlockNode(child, { listDepth: 0, listType: null, orderedIndex: 1 }).filter(isParagraph));
+      continue;
+    }
+
+    const runs = inlineChildrenFromNode(child);
+    if (runs.length > 0) {
+      children.push(new Paragraph({ children: runs }));
+    }
+  }
+
+  if (children.length === 0) {
+    children.push(new Paragraph({ text: normalizeWhitespace(cell.textContent || '') || '' }));
+  }
+
+  return children;
+}
+
+function isParagraph(block: Paragraph | Table): block is Paragraph {
+  return block instanceof Paragraph;
+}
+
+function inlineChildrenFromNode(node: Node, style: InlineStyle = {}): ParagraphChild[] {
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = preserveBasicWhitespace(node.textContent || '');
+    return text ? [new TextRun({ text, ...style })] : [];
+  }
+
+  if (!(node instanceof HTMLElement)) {
+    return [];
+  }
+
+  const tag = node.tagName.toLowerCase();
+  const nextStyle = { ...style };
+
+  if (tag === 'strong' || tag === 'b') {
+    nextStyle.bold = true;
+  }
+  if (tag === 'em' || tag === 'i') {
+    nextStyle.italics = true;
+  }
+  if (tag === 'u') {
+    nextStyle.underline = {};
+  }
+  if (tag === 'code') {
+    nextStyle.font = 'Courier New';
+  }
+
+  if (tag === 'br') {
+    return [new TextRun({ break: 1, ...style })];
+  }
+
+  if (tag === 'img') {
+    const alt = node.getAttribute('alt') || 'Imagen';
+    return [new TextRun({ text: `[${alt}]`, ...style })];
+  }
+
+  if (tag === 'a') {
+    const label = normalizeWhitespace(node.textContent || '') || node.getAttribute('href') || 'Enlace';
+    return [new TextRun({ text: label, underline: {}, color: '0563C1', ...style })];
+  }
+
+  if (['ul', 'ol', 'table'].includes(tag)) {
+    return [];
+  }
+
+  const runs: ParagraphChild[] = [];
+  for (const child of Array.from(node.childNodes)) {
+    runs.push(...inlineChildrenFromNode(child, nextStyle));
+  }
+
+  if (runs.length === 0) {
+    const text = preserveBasicWhitespace(node.textContent || '');
+    if (text) {
+      runs.push(new TextRun({ text, ...nextStyle }));
+    }
+  }
+
+  return runs;
+}
+
+function getHeadingLevel(tagName: string): (typeof HeadingLevel)[keyof typeof HeadingLevel] | undefined {
+  switch (tagName) {
+    case 'h1':
+      return HeadingLevel.HEADING_1;
+    case 'h2':
+      return HeadingLevel.HEADING_2;
+    case 'h3':
+      return HeadingLevel.HEADING_3;
+    case 'h4':
+      return HeadingLevel.HEADING_4;
+    case 'h5':
+      return HeadingLevel.HEADING_5;
+    case 'h6':
+      return HeadingLevel.HEADING_6;
+    default:
+      return undefined;
+  }
 }
 
 function sanitizeHtmlFragment(sourceHtml: string, assets: Map<string, AssetEntry>): string {
@@ -397,7 +722,7 @@ function sortPagesHierarchically(pages: ParsedPage[]): ParsedPage[] {
   return ordered;
 }
 
-function findPropertyValue(xmlDoc: Document, key: string): string | null {
+function findPropertyValue(xmlDoc: globalThis.Document, key: string): string | null {
   const nodes = Array.from(xmlDoc.getElementsByTagName('odeProperty'));
 
   for (const node of nodes) {
@@ -411,8 +736,8 @@ function findPropertyValue(xmlDoc: Document, key: string): string | null {
 }
 
 function getDirectChildren(parent: Element, tagName: string): Element[] {
-  return Array.from(parent.children).filter(
-    child => child instanceof Element && child.tagName === tagName,
+  return Array.from(parent.childNodes).filter(
+    child => child.nodeType === Node.ELEMENT_NODE && (child as Element).tagName === tagName,
   ) as Element[];
 }
 
@@ -459,6 +784,14 @@ function encodeBase64(input: Uint8Array): string {
 
 function decodeUtf8(value: Uint8Array): string {
   return new TextDecoder().decode(value);
+}
+
+function normalizeWhitespace(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
+}
+
+function preserveBasicWhitespace(value: string): string {
+  return value.replace(/\s+/g, ' ').trim();
 }
 
 function toOutputFilename(inputName: string): string {

@@ -14,7 +14,7 @@ Conversor estático en navegador para transformar proyectos `.elpx` de eXeLearni
 
 - No soporta todavía el formato legacy `contentv3.xml`.
 - No intenta reproducir toda la lógica visual de `singlepage`; genera una versión textual y estable pensada para DOCX.
-- La librería HTML a DOCX usa `altChunk`, así que la compatibilidad es mejor en Microsoft Word que en LibreOffice o Google Docs.
+- La exportación actual genera un DOCX nativo simplificado para mejorar la compatibilidad con LibreOffice y Word.
 
 ## Desarrollo
 
