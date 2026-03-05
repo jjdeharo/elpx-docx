@@ -33,6 +33,7 @@ import mammoth from 'mammoth';
 export interface ConvertProgress {
   phase: 'read' | 'parse' | 'filter' | 'render' | 'docx';
   message: string;
+  messageKey?: string;
 }
 
 export interface ConvertResult {
@@ -127,20 +128,20 @@ export async function convertElpxToDocx(
   options?: ElpxExportOptions,
   onProgress?: (progress: ConvertProgress) => void,
 ): Promise<ConvertResult> {
-  onProgress?.({ phase: 'read', message: 'Leyendo el archivo .elpx...' });
+  onProgress?.({ phase: 'read', message: 'Leyendo el archivo .elpx...', messageKey: 'progress.readElpx' });
   const input = new Uint8Array(await file.arrayBuffer());
   const entries = unzipSync(input);
 
-  onProgress?.({ phase: 'parse', message: 'Analizando content.xml...' });
+  onProgress?.({ phase: 'parse', message: 'Analizando content.xml...', messageKey: 'progress.parseContentXml' });
   const project = parseProject(entries);
   const scopedProject = scopeProjectToSelection(project, options?.selectedPageIds);
   const assets = collectAssets(entries);
 
-  onProgress?.({ phase: 'filter', message: 'Aplicando selección de páginas...' });
-  onProgress?.({ phase: 'render', message: 'Generando HTML intermedio...' });
+  onProgress?.({ phase: 'filter', message: 'Aplicando selección de páginas...', messageKey: 'progress.filterPages' });
+  onProgress?.({ phase: 'render', message: 'Generando HTML intermedio...', messageKey: 'progress.renderHtml' });
   const html = await buildHtmlDocument(project, scopedProject, assets, entries);
 
-  onProgress?.({ phase: 'docx', message: 'Generando el documento .docx...' });
+  onProgress?.({ phase: 'docx', message: 'Generando el documento .docx...', messageKey: 'progress.generateDocx' });
   const blob = await buildCompatibleDocx(html);
   const previewHtml = containsLatex(html)
     ? buildMathEnabledSourcePreviewHtml(html, scopedProject.title, scopedProject.language)
@@ -160,17 +161,17 @@ export async function convertElpxToHtml(
   options?: ElpxExportOptions,
   onProgress?: (progress: ConvertProgress) => void,
 ): Promise<ElpxHtmlResult> {
-  onProgress?.({ phase: 'read', message: 'Leyendo el archivo .elpx...' });
+  onProgress?.({ phase: 'read', message: 'Leyendo el archivo .elpx...', messageKey: 'progress.readElpx' });
   const input = new Uint8Array(await file.arrayBuffer());
   const entries = unzipSync(input);
 
-  onProgress?.({ phase: 'parse', message: 'Analizando content.xml...' });
+  onProgress?.({ phase: 'parse', message: 'Analizando content.xml...', messageKey: 'progress.parseContentXml' });
   const project = parseProject(entries);
   const scopedProject = scopeProjectToSelection(project, options?.selectedPageIds);
   const assets = collectAssets(entries);
 
-  onProgress?.({ phase: 'filter', message: 'Aplicando selección de páginas...' });
-  onProgress?.({ phase: 'render', message: 'Generando HTML intermedio...' });
+  onProgress?.({ phase: 'filter', message: 'Aplicando selección de páginas...', messageKey: 'progress.filterPages' });
+  onProgress?.({ phase: 'render', message: 'Generando HTML intermedio...', messageKey: 'progress.renderHtml' });
   const html = await buildHtmlDocument(project, scopedProject, assets, entries);
 
   return {

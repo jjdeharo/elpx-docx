@@ -7,6 +7,7 @@ import { MathMLToLaTeX } from 'mathml-to-latex';
 export interface DocxImportProgress {
   phase: 'read' | 'parse' | 'template' | 'pack';
   message: string;
+  messageKey?: string;
 }
 
 export interface ImportToElpxResult {
@@ -65,12 +66,12 @@ export async function convertDocxToElpx(
   options: DocxImportOptions,
   onProgress?: (progress: DocxImportProgress) => void,
 ): Promise<ImportToElpxResult> {
-  onProgress?.({ phase: 'read', message: 'Leyendo el archivo .docx...' });
+  onProgress?.({ phase: 'read', message: 'Leyendo el archivo .docx...', messageKey: 'progress.readDocx' });
   const inputBuffer = await file.arrayBuffer();
 
-  onProgress?.({ phase: 'parse', message: 'Analizando estilos y contenido del DOCX...' });
+  onProgress?.({ phase: 'parse', message: 'Analizando estilos y contenido del DOCX...', messageKey: 'progress.parseDocxStyles' });
   const htmlValue = await extractDocxHtml(inputBuffer);
-  return convertHtmlToElpx(htmlValue, file.name, options, onProgress, 'Interpretando la estructura del documento...');
+  return convertHtmlToElpx(htmlValue, file.name, options, onProgress, 'progress.parseDocumentStructure');
 }
 
 export async function convertHtmlToElpx(
@@ -78,12 +79,12 @@ export async function convertHtmlToElpx(
   filename: string,
   options: DocxImportOptions,
   onProgress?: (progress: DocxImportProgress) => void,
-  parseMessage = 'Interpretando la estructura del documento...',
+  parseMessageKey = 'progress.parseDocumentStructure',
 ): Promise<ImportToElpxResult> {
-  onProgress?.({ phase: 'parse', message: parseMessage });
+  onProgress?.({ phase: 'parse', message: 'Interpretando la estructura del documento...', messageKey: parseMessageKey });
   const project = buildProjectFromHtml(htmlValue, filename, options);
 
-  onProgress?.({ phase: 'template', message: 'Aplicando la plantilla base de eXeLearning...' });
+  onProgress?.({ phase: 'template', message: 'Aplicando la plantilla base de eXeLearning...', messageKey: 'progress.applyTemplate' });
   const template = await loadBaseTemplate();
   const previewPages = buildStandalonePreviewPages(project, template.entries);
   const previewHtml =
@@ -92,7 +93,7 @@ export async function convertHtmlToElpx(
       : '<!doctype html><html lang="es"><body><p>Sin contenido para previsualizar.</p></body></html>';
   const elpxData = buildElpxFromTemplate(template, project);
 
-  onProgress?.({ phase: 'pack', message: 'Generando el archivo .elpx...' });
+  onProgress?.({ phase: 'pack', message: 'Generando el archivo .elpx...', messageKey: 'progress.packElpx' });
   const blobData = new Uint8Array(elpxData);
   const blob = new Blob([blobData], { type: 'application/zip' });
 

@@ -1,0 +1,392 @@
+export type Locale = 'es' | 'ca' | 'en';
+
+const STORAGE_KEY = 'execonvert.locale';
+
+const dictionaries: Record<Locale, Record<string, string>> = {
+  es: {
+    'lang.label': 'Idioma',
+    'lang.es': 'Español',
+    'lang.ca': 'Català',
+    'lang.en': 'English',
+
+    'app.heroAria': 'Cabecera de la aplicación',
+    'app.subtitle': 'Conversor para eXeLearning',
+    'app.lede': 'Convierte <code>.elpx</code> a <code>.docx</code> o <code>.md</code> y viceversa, directamente en el navegador y sin subir archivos a ningún servidor.',
+    'panel.conversion': 'Conversión',
+
+    'drop.title': 'Suelta aquí un archivo o selecciónalo',
+    'drop.help': 'Archivos compatibles: <code>.elpx</code>, <code>.docx</code> y <code>.md</code>.',
+    'button.openFile': 'Abrir archivo',
+    'file.none': 'Ningún archivo seleccionado.',
+
+    'detected.title': 'Conversión detectada',
+    'output.title': 'Salida desde ELPX',
+    'output.aria': 'Formato de salida',
+    'output.docx': 'Documento Word (.docx)',
+    'output.md': 'Markdown (.md)',
+
+    'pages.title': 'Páginas a exportar',
+    'pages.all': 'Todas',
+    'pages.none': 'Ninguna',
+    'pages.help': 'Modo jerárquico normalizado: si falta una página padre seleccionada, sus hijas pasan a raíz.',
+    'pages.help.loading': 'Cargando páginas...',
+    'pages.help.readError': 'No se ha podido leer la estructura de páginas. Se exportará todo el contenido.',
+    'pages.help.noneDetected': 'No se han detectado páginas seleccionables. Se exportará todo el contenido.',
+    'pages.help.summary': '{selected} de {total} páginas seleccionadas. Modo jerárquico normalizado: si falta una página padre seleccionada, sus hijas pasan a raíz.',
+
+    'structure.title': 'Estructura de páginas',
+    'structure.level': 'Nivel',
+    'structure.target': 'Destino',
+    'structure.heading1': 'Título 1',
+    'structure.heading2': 'Título 2',
+    'structure.heading3': 'Título 3',
+    'structure.heading4': 'Título 4',
+    'structure.h1.page': 'Página',
+    'structure.h1.resource': 'Título del recurso',
+    'structure.block': 'iDevice de texto',
+    'structure.subpage': 'Subpágina',
+    'structure.h1.forcedPage': 'Página (obligatorio)',
+    'structure.disabledNested': 'Subtítulo dentro del iDevice actual',
+    'structure.help.chain': 'Cada nivel solo puede crear subpáginas cuando el nivel inmediatamente anterior también se usa como subpágina.',
+    'structure.help.shift': 'Si <code>Título 1</code> se usa como <em>Título del recurso</em>, el resto de encabezados se interpreta subiendo un nivel.',
+
+    'mdImages.title': 'Imágenes al exportar Markdown',
+    'mdImages.include': 'Incluir imágenes embebidas en el archivo Markdown',
+    'mdImages.help': 'Por defecto se omiten para generar un <code>.md</code> más limpio.',
+
+    'button.preview': 'Previsualizar',
+    'button.save': 'Guardar archivo',
+    'button.working': 'Trabajando...',
+
+    'status.idle': 'Carga un archivo para que la aplicación detecte automáticamente la conversión disponible.',
+    'status.selectFileFirst': 'Selecciona antes un archivo compatible.',
+    'status.previewReady': 'Vista previa generada. Si te convence, pulsa Guardar archivo.',
+    'status.previewFirst': 'Primero genera la vista previa con la configuración actual.',
+    'status.unsupported': 'Formato no compatible. Usa un archivo .elpx, .docx o .md.',
+    'status.docxDetected': 'Archivo DOCX detectado. Revisa la estructura de páginas y pulsa convertir.',
+    'status.mdDetected': 'Archivo Markdown detectado. Revisa la estructura de páginas y pulsa convertir.',
+    'status.elpxDetected': 'Archivo ELPX detectado. Elige formato y páginas, y pulsa convertir.',
+    'status.readingPages': 'Leyendo estructura de páginas del ELPX...',
+    'status.generatingElpxPreview': 'Generando vista previa del ELPX...',
+    'status.popupBlocked': 'No se pudo abrir la ventana de vista previa (bloqueador de ventanas emergentes).',
+    'status.errorPrefix': 'Error: {message}',
+
+    'detected.docxToElpx': 'Se importará el archivo <code>.docx</code> para generar un proyecto <code>.elpx</code>.',
+    'detected.mdToElpx': 'Se importará el archivo <code>.md</code> para generar un proyecto <code>.elpx</code>.',
+    'detected.elpxToMd': 'Se exportará el archivo <code>.elpx</code> a <code>.md</code>.',
+    'detected.elpxToDocx': 'Se exportará el archivo <code>.elpx</code> a <code>.docx</code>.',
+
+    'done.import.withDialog': '{source} completada. Se han creado {pages} páginas y {blocks} iDevices.',
+    'done.import.download': '{source} completada. Se han creado {pages} páginas y {blocks} iDevices con descarga estándar.',
+    'done.export.withDialog': 'Conversión a {format} completada. Se han procesado {pages} páginas.',
+    'done.export.download': 'Conversión a {format} completada. Se han procesado {pages} páginas y se ha usado la descarga estándar.',
+    'source.docxImport': 'Importación DOCX',
+    'source.mdImport': 'Importación Markdown',
+    'format.markdown': 'Markdown',
+    'format.docx': 'DOCX',
+
+    'error.selectAtLeastOnePage': 'Selecciona al menos una página para exportar.',
+    'error.saveCancelled': 'Guardado cancelado por el usuario.',
+
+    'preview.title': 'Vista previa',
+    'preview.openWindow': 'Abrir en ventana',
+    'preview.help': 'Revisa el resultado antes de guardar. Si cambias opciones o páginas, vuelve a previsualizar.',
+    'preview.iframeTitle': 'Vista previa del resultado',
+    'preview.pagedFrameTitle': 'Vista previa del ELPX',
+
+    'save.type.elpx': 'Proyecto de eXeLearning',
+    'save.type.md': 'Documento Markdown',
+    'save.type.docx': 'Documento de Word',
+
+    'footer.version': 'Versión beta · {version} · ©',
+    'footer.license': 'Licencia AGPLv3',
+    'footer.repo': 'Repositorio GitHub',
+    'footer.issues': 'Problemas y sugerencias',
+    'footer.note.independent': 'Proyecto independiente. No está afiliado ni avalado oficialmente por eXeLearning o INTEF.',
+    'footer.note.thirdParty': 'Este proyecto reutiliza recursos de eXeLearning para compatibilidad con <code>.elpx</code>. Consulta las atribuciones en',
+
+    'progress.readElpx': 'Leyendo el archivo .elpx...',
+    'progress.parseContentXml': 'Analizando content.xml...',
+    'progress.filterPages': 'Aplicando selección de páginas...',
+    'progress.renderHtml': 'Generando HTML intermedio...',
+    'progress.generateDocx': 'Generando el documento .docx...',
+    'progress.readDocx': 'Leyendo el archivo .docx...',
+    'progress.parseDocxStyles': 'Analizando estilos y contenido del DOCX...',
+    'progress.parseDocumentStructure': 'Interpretando la estructura del documento...',
+    'progress.parseMarkdownStructure': 'Interpretando la estructura del Markdown...',
+    'progress.applyTemplate': 'Aplicando la plantilla base de eXeLearning...',
+    'progress.packElpx': 'Generando el archivo .elpx...',
+    'progress.readMarkdown': 'Leyendo el archivo Markdown...',
+    'progress.markdownToHtml': 'Convirtiendo Markdown a HTML...',
+    'progress.htmlToMarkdown': 'Convirtiendo HTML a Markdown...'
+  },
+  ca: {
+    'lang.label': 'Idioma',
+    'lang.es': 'Español',
+    'lang.ca': 'Català',
+    'lang.en': 'English',
+
+    'app.heroAria': 'Capçalera de l’aplicació',
+    'app.subtitle': 'Convertidor per a eXeLearning',
+    'app.lede': 'Converteix <code>.elpx</code> a <code>.docx</code> o <code>.md</code> i a l’inrevés, directament al navegador i sense pujar fitxers a cap servidor.',
+    'panel.conversion': 'Conversió',
+
+    'drop.title': 'Deixa anar aquí un fitxer o selecciona’l',
+    'drop.help': 'Fitxers compatibles: <code>.elpx</code>, <code>.docx</code> i <code>.md</code>.',
+    'button.openFile': 'Obrir fitxer',
+    'file.none': 'Cap fitxer seleccionat.',
+
+    'detected.title': 'Conversió detectada',
+    'output.title': 'Sortida des d’ELPX',
+    'output.aria': 'Format de sortida',
+    'output.docx': 'Document Word (.docx)',
+    'output.md': 'Markdown (.md)',
+
+    'pages.title': 'Pàgines a exportar',
+    'pages.all': 'Totes',
+    'pages.none': 'Cap',
+    'pages.help': 'Mode jeràrquic normalitzat: si falta una pàgina pare seleccionada, les filles passen a arrel.',
+    'pages.help.loading': 'Carregant pàgines...',
+    'pages.help.readError': 'No s’ha pogut llegir l’estructura de pàgines. S’exportarà tot el contingut.',
+    'pages.help.noneDetected': 'No s’han detectat pàgines seleccionables. S’exportarà tot el contingut.',
+    'pages.help.summary': '{selected} de {total} pàgines seleccionades. Mode jeràrquic normalitzat: si falta una pàgina pare seleccionada, les filles passen a arrel.',
+
+    'structure.title': 'Estructura de pàgines',
+    'structure.level': 'Nivell',
+    'structure.target': 'Destinació',
+    'structure.heading1': 'Títol 1',
+    'structure.heading2': 'Títol 2',
+    'structure.heading3': 'Títol 3',
+    'structure.heading4': 'Títol 4',
+    'structure.h1.page': 'Pàgina',
+    'structure.h1.resource': 'Títol del recurs',
+    'structure.block': 'iDevice de text',
+    'structure.subpage': 'Subpàgina',
+    'structure.h1.forcedPage': 'Pàgina (obligatori)',
+    'structure.disabledNested': 'Subtítol dins l’iDevice actual',
+    'structure.help.chain': 'Cada nivell només pot crear subpàgines quan el nivell immediatament anterior també s’utilitza com a subpàgina.',
+    'structure.help.shift': 'Si <code>Títol 1</code> s’utilitza com a <em>Títol del recurs</em>, la resta d’encapçalaments s’interpreta pujant un nivell.',
+
+    'mdImages.title': 'Imatges en exportar Markdown',
+    'mdImages.include': 'Incloure imatges incrustades al fitxer Markdown',
+    'mdImages.help': 'Per defecte s’ometen per generar un <code>.md</code> més net.',
+
+    'button.preview': 'Previsualitzar',
+    'button.save': 'Desar fitxer',
+    'button.working': 'Treballant...',
+
+    'status.idle': 'Carrega un fitxer perquè l’aplicació detecti automàticament la conversió disponible.',
+    'status.selectFileFirst': 'Selecciona abans un fitxer compatible.',
+    'status.previewReady': 'Previsualització generada. Si et convenç, prem Desar fitxer.',
+    'status.previewFirst': 'Primer genera la previsualització amb la configuració actual.',
+    'status.unsupported': 'Format no compatible. Fes servir un fitxer .elpx, .docx o .md.',
+    'status.docxDetected': 'Fitxer DOCX detectat. Revisa l’estructura de pàgines i prem convertir.',
+    'status.mdDetected': 'Fitxer Markdown detectat. Revisa l’estructura de pàgines i prem convertir.',
+    'status.elpxDetected': 'Fitxer ELPX detectat. Tria format i pàgines, i prem convertir.',
+    'status.readingPages': 'Llegint l’estructura de pàgines de l’ELPX...',
+    'status.generatingElpxPreview': 'Generant la previsualització de l’ELPX...',
+    'status.popupBlocked': 'No s’ha pogut obrir la finestra de previsualització (bloquejador de finestres emergents).',
+    'status.errorPrefix': 'Error: {message}',
+
+    'detected.docxToElpx': 'S’importarà el fitxer <code>.docx</code> per generar un projecte <code>.elpx</code>.',
+    'detected.mdToElpx': 'S’importarà el fitxer <code>.md</code> per generar un projecte <code>.elpx</code>.',
+    'detected.elpxToMd': 'S’exportarà el fitxer <code>.elpx</code> a <code>.md</code>.',
+    'detected.elpxToDocx': 'S’exportarà el fitxer <code>.elpx</code> a <code>.docx</code>.',
+
+    'done.import.withDialog': '{source} completada. S’han creat {pages} pàgines i {blocks} iDevices.',
+    'done.import.download': '{source} completada. S’han creat {pages} pàgines i {blocks} iDevices amb descàrrega estàndard.',
+    'done.export.withDialog': 'Conversió a {format} completada. S’han processat {pages} pàgines.',
+    'done.export.download': 'Conversió a {format} completada. S’han processat {pages} pàgines i s’ha fet servir la descàrrega estàndard.',
+    'source.docxImport': 'Importació DOCX',
+    'source.mdImport': 'Importació Markdown',
+    'format.markdown': 'Markdown',
+    'format.docx': 'DOCX',
+
+    'error.selectAtLeastOnePage': 'Selecciona almenys una pàgina per exportar.',
+    'error.saveCancelled': 'Desat cancel·lat per l’usuari.',
+
+    'preview.title': 'Vista prèvia',
+    'preview.openWindow': 'Obrir en finestra',
+    'preview.help': 'Revisa el resultat abans de desar. Si canvies opcions o pàgines, torna a previsualitzar.',
+    'preview.iframeTitle': 'Vista prèvia del resultat',
+    'preview.pagedFrameTitle': 'Vista prèvia de l’ELPX',
+
+    'save.type.elpx': 'Projecte d’eXeLearning',
+    'save.type.md': 'Document Markdown',
+    'save.type.docx': 'Document de Word',
+
+    'footer.version': 'Versió beta · {version} · ©',
+    'footer.license': 'Llicència AGPLv3',
+    'footer.repo': 'Repositori GitHub',
+    'footer.issues': 'Problemes i suggeriments',
+    'footer.note.independent': 'Projecte independent. No està afiliat ni avalat oficialment per eXeLearning o INTEF.',
+    'footer.note.thirdParty': 'Aquest projecte reutilitza recursos d’eXeLearning per compatibilitat amb <code>.elpx</code>. Consulta les atribucions a',
+
+    'progress.readElpx': 'Llegint el fitxer .elpx...',
+    'progress.parseContentXml': 'Analitzant content.xml...',
+    'progress.filterPages': 'Aplicant la selecció de pàgines...',
+    'progress.renderHtml': 'Generant HTML intermedi...',
+    'progress.generateDocx': 'Generant el document .docx...',
+    'progress.readDocx': 'Llegint el fitxer .docx...',
+    'progress.parseDocxStyles': 'Analitzant estils i contingut del DOCX...',
+    'progress.parseDocumentStructure': 'Interpretant l’estructura del document...',
+    'progress.parseMarkdownStructure': 'Interpretant l’estructura del Markdown...',
+    'progress.applyTemplate': 'Aplicant la plantilla base d’eXeLearning...',
+    'progress.packElpx': 'Generant el fitxer .elpx...',
+    'progress.readMarkdown': 'Llegint el fitxer Markdown...',
+    'progress.markdownToHtml': 'Convertint Markdown a HTML...',
+    'progress.htmlToMarkdown': 'Convertint HTML a Markdown...'
+  },
+  en: {
+    'lang.label': 'Language',
+    'lang.es': 'Español',
+    'lang.ca': 'Català',
+    'lang.en': 'English',
+
+    'app.heroAria': 'Application header',
+    'app.subtitle': 'Converter for eXeLearning',
+    'app.lede': 'Convert <code>.elpx</code> to <code>.docx</code> or <code>.md</code> and back, directly in the browser without uploading files to any server.',
+    'panel.conversion': 'Conversion',
+
+    'drop.title': 'Drop a file here or choose one',
+    'drop.help': 'Supported files: <code>.elpx</code>, <code>.docx</code>, and <code>.md</code>.',
+    'button.openFile': 'Open file',
+    'file.none': 'No file selected.',
+
+    'detected.title': 'Detected conversion',
+    'output.title': 'Output from ELPX',
+    'output.aria': 'Output format',
+    'output.docx': 'Word document (.docx)',
+    'output.md': 'Markdown (.md)',
+
+    'pages.title': 'Pages to export',
+    'pages.all': 'All',
+    'pages.none': 'None',
+    'pages.help': 'Normalized hierarchical mode: if a selected parent page is missing, child pages move to root level.',
+    'pages.help.loading': 'Loading pages...',
+    'pages.help.readError': 'Could not read page structure. All content will be exported.',
+    'pages.help.noneDetected': 'No selectable pages were detected. All content will be exported.',
+    'pages.help.summary': '{selected} of {total} pages selected. Normalized hierarchical mode: if a selected parent page is missing, child pages move to root level.',
+
+    'structure.title': 'Page structure',
+    'structure.level': 'Level',
+    'structure.target': 'Target',
+    'structure.heading1': 'Heading 1',
+    'structure.heading2': 'Heading 2',
+    'structure.heading3': 'Heading 3',
+    'structure.heading4': 'Heading 4',
+    'structure.h1.page': 'Page',
+    'structure.h1.resource': 'Resource title',
+    'structure.block': 'Text iDevice',
+    'structure.subpage': 'Subpage',
+    'structure.h1.forcedPage': 'Page (required)',
+    'structure.disabledNested': 'Subtitle inside current iDevice',
+    'structure.help.chain': 'Each level can create subpages only if the immediate previous level is also used as a subpage.',
+    'structure.help.shift': 'If <code>Heading 1</code> is used as <em>Resource title</em>, remaining headings are interpreted one level up.',
+
+    'mdImages.title': 'Images when exporting Markdown',
+    'mdImages.include': 'Include embedded images in Markdown file',
+    'mdImages.help': 'By default they are omitted for a cleaner <code>.md</code>.',
+
+    'button.preview': 'Preview',
+    'button.save': 'Save file',
+    'button.working': 'Working...',
+
+    'status.idle': 'Load a file so the app can automatically detect the available conversion.',
+    'status.selectFileFirst': 'Select a compatible file first.',
+    'status.previewReady': 'Preview generated. If it looks good, click Save file.',
+    'status.previewFirst': 'Generate preview first with the current settings.',
+    'status.unsupported': 'Unsupported format. Use a .elpx, .docx, or .md file.',
+    'status.docxDetected': 'DOCX file detected. Review page structure and click convert.',
+    'status.mdDetected': 'Markdown file detected. Review page structure and click convert.',
+    'status.elpxDetected': 'ELPX file detected. Choose output format and pages, then click convert.',
+    'status.readingPages': 'Reading ELPX page structure...',
+    'status.generatingElpxPreview': 'Generating ELPX preview...',
+    'status.popupBlocked': 'Could not open preview window (popup blocker).',
+    'status.errorPrefix': 'Error: {message}',
+
+    'detected.docxToElpx': 'The <code>.docx</code> file will be imported to generate an <code>.elpx</code> project.',
+    'detected.mdToElpx': 'The <code>.md</code> file will be imported to generate an <code>.elpx</code> project.',
+    'detected.elpxToMd': 'The <code>.elpx</code> file will be exported to <code>.md</code>.',
+    'detected.elpxToDocx': 'The <code>.elpx</code> file will be exported to <code>.docx</code>.',
+
+    'done.import.withDialog': '{source} completed. {pages} pages and {blocks} iDevices were created.',
+    'done.import.download': '{source} completed. {pages} pages and {blocks} iDevices were created using standard download.',
+    'done.export.withDialog': 'Conversion to {format} completed. {pages} pages were processed.',
+    'done.export.download': 'Conversion to {format} completed. {pages} pages were processed using standard download.',
+    'source.docxImport': 'DOCX import',
+    'source.mdImport': 'Markdown import',
+    'format.markdown': 'Markdown',
+    'format.docx': 'DOCX',
+
+    'error.selectAtLeastOnePage': 'Select at least one page to export.',
+    'error.saveCancelled': 'Save cancelled by user.',
+
+    'preview.title': 'Preview',
+    'preview.openWindow': 'Open in window',
+    'preview.help': 'Review result before saving. If you change options or pages, generate preview again.',
+    'preview.iframeTitle': 'Result preview',
+    'preview.pagedFrameTitle': 'ELPX preview',
+
+    'save.type.elpx': 'eXeLearning project',
+    'save.type.md': 'Markdown document',
+    'save.type.docx': 'Word document',
+
+    'footer.version': 'Beta version · {version} · ©',
+    'footer.license': 'AGPLv3 License',
+    'footer.repo': 'GitHub repository',
+    'footer.issues': 'Issues and suggestions',
+    'footer.note.independent': 'Independent project. Not officially affiliated with or endorsed by eXeLearning or INTEF.',
+    'footer.note.thirdParty': 'This project reuses eXeLearning resources for <code>.elpx</code> compatibility. See attributions in',
+
+    'progress.readElpx': 'Reading .elpx file...',
+    'progress.parseContentXml': 'Analyzing content.xml...',
+    'progress.filterPages': 'Applying page selection...',
+    'progress.renderHtml': 'Generating intermediate HTML...',
+    'progress.generateDocx': 'Generating .docx document...',
+    'progress.readDocx': 'Reading .docx file...',
+    'progress.parseDocxStyles': 'Analyzing DOCX styles and content...',
+    'progress.parseDocumentStructure': 'Interpreting document structure...',
+    'progress.parseMarkdownStructure': 'Interpreting Markdown structure...',
+    'progress.applyTemplate': 'Applying eXeLearning base template...',
+    'progress.packElpx': 'Generating .elpx file...',
+    'progress.readMarkdown': 'Reading Markdown file...',
+    'progress.markdownToHtml': 'Converting Markdown to HTML...',
+    'progress.htmlToMarkdown': 'Converting HTML to Markdown...'
+  },
+};
+
+export function resolveInitialLocale(): Locale {
+  const stored = localStorage.getItem(STORAGE_KEY);
+  if (stored === 'es' || stored === 'ca' || stored === 'en') {
+    return stored;
+  }
+
+  const nav = (navigator.language || 'es').toLowerCase();
+  if (nav.startsWith('ca')) return 'ca';
+  if (nav.startsWith('en')) return 'en';
+  return 'es';
+}
+
+export function persistLocale(locale: Locale): void {
+  localStorage.setItem(STORAGE_KEY, locale);
+}
+
+export function createI18n(locale: Locale) {
+  const dictionary = dictionaries[locale] || dictionaries.es;
+  const fallback = dictionaries.es;
+
+  return {
+    locale,
+    t(key: string, vars?: Record<string, string | number>): string {
+      const template = dictionary[key] ?? fallback[key] ?? key;
+      if (!vars) {
+        return template;
+      }
+      return template.replace(/\{([a-zA-Z0-9_]+)\}/g, (_match, name: string) => {
+        const value = vars[name];
+        return value === undefined ? '' : String(value);
+      });
+    },
+  };
+}

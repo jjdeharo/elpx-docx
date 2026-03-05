@@ -21,7 +21,7 @@ export async function convertElpxToMarkdown(
 ): Promise<MarkdownExportResult> {
   const htmlResult = await convertElpxToHtml(file, { selectedPageIds: options.selectedPageIds }, onProgress);
 
-  onProgress?.({ phase: 'render', message: 'Convirtiendo HTML a Markdown...' });
+  onProgress?.({ phase: 'render', message: 'Convirtiendo HTML a Markdown...', messageKey: 'progress.htmlToMarkdown' });
   const markdown = convertHtmlDocumentToMarkdown(htmlResult.html, options);
 
   return {

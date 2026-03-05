@@ -3,6 +3,7 @@ import { convertElpxToDocx, inspectElpxPages, type ConvertProgress, type ElpxPag
 import { convertDocxToElpx, type DocxImportProgress, type Heading1Mode, type HeadingMode } from './docx-import';
 import { convertElpxToMarkdown } from './elpx-markdown';
 import { convertMarkdownToElpx } from './markdown-import';
+import { createI18n, persistLocale, resolveInitialLocale, type Locale } from './i18n';
 
 interface FilePickerWindow extends Window {
   showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
@@ -53,6 +54,10 @@ if (!app) {
   throw new Error('No se ha encontrado el contenedor principal.');
 }
 
+const APP_VERSION = 'v0.1.0-beta.4';
+const locale = resolveInitialLocale();
+const { t } = createI18n(locale);
+
 const materialSymbolsHref =
   'https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,500,0,0';
 if (!document.querySelector(`link[href="${materialSymbolsHref}"]`)) {
@@ -64,150 +69,157 @@ if (!document.querySelector(`link[href="${materialSymbolsHref}"]`)) {
 
 app.innerHTML = `
   <main class="shell">
-    <section class="hero" aria-label="Cabecera de la aplicación">
+    <section class="hero" aria-label="${escapeAttribute(t('app.heroAria'))}">
       <div class="brand">
         <span class="brand-mark" aria-hidden="true">
           <img src="./favicon.svg" alt="" />
         </span>
         <div class="brand-copy">
           <h1>eXeConvert</h1>
-          <p class="subtitle">Conversor para eXeLearning</p>
+          <p class="subtitle">${t('app.subtitle')}</p>
         </div>
       </div>
+      <div class="locale-picker">
+        <label for="language-select">${t('lang.label')}</label>
+        <select id="language-select">
+          <option value="es" ${locale === 'es' ? 'selected' : ''}>${t('lang.es')}</option>
+          <option value="ca" ${locale === 'ca' ? 'selected' : ''}>${t('lang.ca')}</option>
+          <option value="en" ${locale === 'en' ? 'selected' : ''}>${t('lang.en')}</option>
+        </select>
+      </div>
       <p class="lede">
-        Convierte <code>.elpx</code> a <code>.docx</code> o <code>.md</code> y viceversa, directamente en el navegador y
-        sin subir archivos a ningún servidor.
+        ${t('app.lede')}
       </p>
     </section>
 
     <section class="panel">
-      <h2>Conversión</h2>
+      <h2>${t('panel.conversion')}</h2>
       <form id="conversion-form" class="form">
         <div id="drop-field" class="dropzone" tabindex="0" role="button" aria-describedby="drop-help">
           <input id="file-input" type="file" accept=".elpx,.zip,.docx,.md,.markdown,.mdown,.txt" hidden />
-          <p class="dropzone-title">Suelta aquí un archivo o selecciónalo</p>
+          <p class="dropzone-title">${t('drop.title')}</p>
           <p id="drop-help" class="drop-help">
-            Archivos compatibles: <code>.elpx</code>, <code>.docx</code> y <code>.md</code>.
+            ${t('drop.help')}
           </p>
           <div class="dropzone-actions">
             <button id="pick-button" type="button">
               <span class="material-symbols-rounded" aria-hidden="true">upload_file</span>
-              <span class="btn-label">Abrir archivo</span>
+              <span class="btn-label">${t('button.openFile')}</span>
             </button>
-            <span id="file-name" class="picked-file">Ningún archivo seleccionado.</span>
+            <span id="file-name" class="picked-file">${t('file.none')}</span>
           </div>
         </div>
 
         <div id="detected-field" class="field" hidden>
-          <span>Conversión detectada</span>
+          <span>${t('detected.title')}</span>
           <p id="detected-help" class="field-help"></p>
         </div>
 
         <div id="output-field" class="field" hidden>
-          <span>Salida desde ELPX</span>
-          <div class="radio-group" role="radiogroup" aria-label="Formato de salida">
+          <span>${t('output.title')}</span>
+          <div class="radio-group" role="radiogroup" aria-label="${escapeAttribute(t('output.aria'))}">
             <label class="radio-row">
               <input type="radio" name="elpx-output" value="docx" checked />
-              <span>Documento Word (.docx)</span>
+              <span>${t('output.docx')}</span>
             </label>
             <label class="radio-row">
               <input type="radio" name="elpx-output" value="markdown" />
-              <span>Markdown (.md)</span>
+              <span>${t('output.md')}</span>
             </label>
           </div>
         </div>
 
         <div id="page-selection-field" class="field" hidden>
-          <span>Páginas a exportar</span>
+          <span>${t('pages.title')}</span>
           <div class="page-selection-actions">
             <button id="pages-all" type="button" class="ghost-button">
               <span class="material-symbols-rounded" aria-hidden="true">done_all</span>
-              <span class="btn-label">Todas</span>
+              <span class="btn-label">${t('pages.all')}</span>
             </button>
             <button id="pages-none" type="button" class="ghost-button">
               <span class="material-symbols-rounded" aria-hidden="true">remove_done</span>
-              <span class="btn-label">Ninguna</span>
+              <span class="btn-label">${t('pages.none')}</span>
             </button>
           </div>
           <div id="page-selection-list" class="page-selection-list"></div>
           <p id="page-selection-help" class="field-help">
-            Modo jerárquico normalizado: si falta una página padre seleccionada, sus hijas pasan a raíz.
+            ${t('pages.help')}
           </p>
         </div>
 
         <div id="structure-field" class="field" hidden>
-          <span>Estructura de páginas</span>
+          <span>${t('structure.title')}</span>
           <table class="mapping-table">
             <thead>
               <tr>
-                <th>Nivel</th>
-                <th>Destino</th>
+                <th>${t('structure.level')}</th>
+                <th>${t('structure.target')}</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <th scope="row"><code>Título 1</code></th>
+                <th scope="row"><code>${t('structure.heading1')}</code></th>
                 <td>
                   <select id="heading1-mode">
-                    <option value="page" selected>Página</option>
-                    <option value="resource">Título del recurso</option>
+                    <option value="page" selected>${t('structure.h1.page')}</option>
+                    <option value="resource">${t('structure.h1.resource')}</option>
                   </select>
                 </td>
               </tr>
               <tr>
-                <th scope="row"><code>Título 2</code></th>
+                <th scope="row"><code>${t('structure.heading2')}</code></th>
                 <td>
                   <select id="heading2-mode">
-                    <option value="block" selected>iDevice de texto</option>
-                    <option value="page">Subpágina</option>
+                    <option value="block" selected>${t('structure.block')}</option>
+                    <option value="page">${t('structure.subpage')}</option>
                   </select>
                 </td>
               </tr>
               <tr>
-                <th scope="row"><code>Título 3</code></th>
+                <th scope="row"><code>${t('structure.heading3')}</code></th>
                 <td>
                   <select id="heading3-mode">
-                    <option value="block" selected>iDevice de texto</option>
-                    <option value="page">Subpágina</option>
+                    <option value="block" selected>${t('structure.block')}</option>
+                    <option value="page">${t('structure.subpage')}</option>
                   </select>
                 </td>
               </tr>
               <tr>
-                <th scope="row"><code>Título 4</code></th>
+                <th scope="row"><code>${t('structure.heading4')}</code></th>
                 <td>
                   <select id="heading4-mode">
-                    <option value="block" selected>iDevice de texto</option>
-                    <option value="page">Subpágina</option>
+                    <option value="block" selected>${t('structure.block')}</option>
+                    <option value="page">${t('structure.subpage')}</option>
                   </select>
                 </td>
               </tr>
             </tbody>
           </table>
           <p class="field-help">
-            Cada nivel solo puede crear subpáginas cuando el nivel inmediatamente anterior también se usa como subpágina.
+            ${t('structure.help.chain')}
           </p>
           <p class="field-help">
-            Si <code>Título 1</code> se usa como <em>Título del recurso</em>, el resto de encabezados se interpreta subiendo un nivel.
+            ${t('structure.help.shift')}
           </p>
         </div>
 
         <div id="markdown-images-field" class="field" hidden>
-          <span>Imágenes al exportar Markdown</span>
+          <span>${t('mdImages.title')}</span>
           <label class="checkbox-row">
             <input id="markdown-images" type="checkbox" />
-            <span>Incluir imágenes embebidas en el archivo Markdown</span>
+            <span>${t('mdImages.include')}</span>
           </label>
-          <p class="field-help">Por defecto se omiten para generar un <code>.md</code> más limpio.</p>
+          <p class="field-help">${t('mdImages.help')}</p>
         </div>
 
         <div class="actions">
           <button id="preview-button" type="button" disabled hidden>
             <span class="material-symbols-rounded" aria-hidden="true">preview</span>
-            <span class="btn-label">Previsualizar</span>
+            <span class="btn-label">${t('button.preview')}</span>
           </button>
           <button id="submit-button" type="submit" disabled hidden>
             <span class="material-symbols-rounded" aria-hidden="true">save</span>
-            <span class="btn-label">Guardar archivo</span>
+            <span class="btn-label">${t('button.save')}</span>
           </button>
         </div>
       </form>
@@ -220,41 +232,40 @@ app.innerHTML = `
       <div class="status-shell">
         <span id="status-spinner" class="status-spinner" hidden aria-hidden="true"></span>
         <p id="status" class="status" aria-live="polite">
-          Carga un archivo para que la aplicación detecte automáticamente la conversión disponible.
+          ${t('status.idle')}
         </p>
       </div>
 
       <div id="preview-field" class="field preview-field" hidden>
         <div class="preview-heading">
-          <span>Vista previa</span>
+          <span>${t('preview.title')}</span>
           <button id="preview-popout-button" type="button" class="ghost-button" hidden>
             <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
-            <span class="btn-label">Abrir en ventana</span>
+            <span class="btn-label">${t('preview.openWindow')}</span>
           </button>
         </div>
-        <p class="field-help">Revisa el resultado antes de guardar. Si cambias opciones o páginas, vuelve a previsualizar.</p>
-        <iframe id="preview-frame" class="preview-frame" title="Vista previa del resultado"></iframe>
+        <p class="field-help">${t('preview.help')}</p>
+        <iframe id="preview-frame" class="preview-frame" title="${escapeAttribute(t('preview.iframeTitle'))}"></iframe>
         <pre id="preview-markdown" class="preview-markdown" hidden></pre>
       </div>
     </section>
 
     <footer class="app-footer">
       <p class="app-footer-meta">
-        Versión beta · v0.1.0-beta.4 · ©
+        ${t('footer.version', { version: APP_VERSION })}
         <a href="https://bilateria.org" target="_blank" rel="noopener noreferrer">Juan José de Haro</a>
         ·
-        <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">Licencia AGPLv3</a>
+        <a href="https://www.gnu.org/licenses/agpl-3.0.html" target="_blank" rel="noopener noreferrer">${t('footer.license')}</a>
         ·
-        <a href="https://github.com/jjdeharo/eXeConvert" target="_blank" rel="noopener noreferrer">Repositorio GitHub</a>
+        <a href="https://github.com/jjdeharo/eXeConvert" target="_blank" rel="noopener noreferrer">${t('footer.repo')}</a>
         ·
-        <a href="https://github.com/jjdeharo/eXeConvert/issues" target="_blank" rel="noopener noreferrer">Problemas y sugerencias</a>
+        <a href="https://github.com/jjdeharo/eXeConvert/issues" target="_blank" rel="noopener noreferrer">${t('footer.issues')}</a>
       </p>
       <p class="app-footer-note">
-        Proyecto independiente. No está afiliado ni avalado oficialmente por eXeLearning o INTEF.
+        ${t('footer.note.independent')}
       </p>
       <p class="app-footer-note">
-        Este proyecto reutiliza recursos de eXeLearning para compatibilidad con <code>.elpx</code>.
-        Consulta las atribuciones en
+        ${t('footer.note.thirdParty')}
         <a href="./THIRD_PARTY_NOTICES.md" target="_blank" rel="noopener noreferrer">THIRD_PARTY_NOTICES</a>.
       </p>
     </footer>
@@ -264,6 +275,7 @@ app.innerHTML = `
 const form = document.querySelector<HTMLFormElement>('#conversion-form')!;
 const dropField = document.querySelector<HTMLDivElement>('#drop-field')!;
 const pickButton = document.querySelector<HTMLButtonElement>('#pick-button')!;
+const languageSelect = document.querySelector<HTMLSelectElement>('#language-select')!;
 const fileInput = document.querySelector<HTMLInputElement>('#file-input')!;
 const fileNameElement = document.querySelector<HTMLSpanElement>('#file-name')!;
 const detectedField = document.querySelector<HTMLDivElement>('#detected-field')!;
@@ -305,8 +317,17 @@ let pageInspectionSequence = 0;
 let preparedConversion: PreparedConversion | null = null;
 let previewVirtualPages: Record<string, string> | null = null;
 let previewCurrentPath = 'index.html';
-const idlePreviewLabel = 'Previsualizar';
-const idleSaveLabel = 'Guardar archivo';
+const idlePreviewLabel = t('button.preview');
+const idleSaveLabel = t('button.save');
+
+languageSelect.addEventListener('change', () => {
+  const value = languageSelect.value;
+  if (value === locale || (value !== 'es' && value !== 'ca' && value !== 'en')) {
+    return;
+  }
+  persistLocale(value as Locale);
+  window.location.reload();
+});
 
 pickButton.addEventListener('click', () => {
   fileInput.click();
@@ -423,7 +444,7 @@ previewFrame.addEventListener('load', () => {
 
 previewButton.addEventListener('click', async () => {
   if (!selectedFile || !selectedKind) {
-    setStatus('Selecciona antes un archivo compatible.');
+    setStatus(t('status.selectFileFirst'));
     return;
   }
 
@@ -431,10 +452,10 @@ previewButton.addEventListener('click', async () => {
   try {
     preparedConversion = await prepareCurrentConversion(selectedFile, selectedKind);
     renderPreview(preparedConversion);
-    setStatus('Vista previa generada. Si te convence, pulsa Guardar archivo.');
+    setStatus(t('status.previewReady'));
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    setStatus(`Error: ${message}`, true);
+    setStatus(t('status.errorPrefix', { message }), true);
   } finally {
     setBusyState(false);
     syncActionButtons();
@@ -445,13 +466,13 @@ form.addEventListener('submit', async event => {
   event.preventDefault();
 
   if (!selectedFile || !selectedKind) {
-    setStatus('Selecciona antes un archivo compatible.');
+    setStatus(t('status.selectFileFirst'));
     return;
   }
 
   const currentSignature = computeConversionSignature();
   if (!preparedConversion || preparedConversion.signature !== currentSignature) {
-    setStatus('Primero genera la vista previa con la configuración actual.', true);
+    setStatus(t('status.previewFirst'), true);
     syncActionButtons();
     return;
   }
@@ -461,24 +482,32 @@ form.addEventListener('submit', async event => {
     const savedWithDialog = await saveBlobToTarget(preparedConversion.blob, preparedConversion.filename, saveTarget);
 
     if (preparedConversion.kind === 'elpx') {
-      const sourceName = selectedKind === 'docx' ? 'Importación DOCX' : 'Importación Markdown';
+      const sourceName = selectedKind === 'docx' ? t('source.docxImport') : t('source.mdImport');
       setStatus(
         savedWithDialog
-          ? `${sourceName} completada. Se han creado ${preparedConversion.pageCount} páginas y ${preparedConversion.blockCount || 0} iDevices.`
-          : `${sourceName} completada. Se han creado ${preparedConversion.pageCount} páginas y ${preparedConversion.blockCount || 0} iDevices con descarga estándar.`,
+          ? t('done.import.withDialog', {
+              source: sourceName,
+              pages: preparedConversion.pageCount,
+              blocks: preparedConversion.blockCount || 0,
+            })
+          : t('done.import.download', {
+              source: sourceName,
+              pages: preparedConversion.pageCount,
+              blocks: preparedConversion.blockCount || 0,
+            }),
       );
       return;
     }
 
-    const formatLabel = preparedConversion.kind === 'markdown' ? 'Markdown' : 'DOCX';
+    const formatLabel = preparedConversion.kind === 'markdown' ? t('format.markdown') : t('format.docx');
     setStatus(
       savedWithDialog
-        ? `Conversión a ${formatLabel} completada. Se han procesado ${preparedConversion.pageCount} páginas.`
-        : `Conversión a ${formatLabel} completada. Se han procesado ${preparedConversion.pageCount} páginas y se ha usado la descarga estándar.`,
+        ? t('done.export.withDialog', { format: formatLabel, pages: preparedConversion.pageCount })
+        : t('done.export.download', { format: formatLabel, pages: preparedConversion.pageCount }),
     );
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    setStatus(`Error: ${message}`, true);
+    setStatus(t('status.errorPrefix', { message }), true);
   }
 });
 
@@ -488,11 +517,11 @@ function handleSelectedFile(file: File | null): void {
   if (!file) {
     selectedKind = null;
     fileInput.value = '';
-    fileNameElement.textContent = 'Ningún archivo seleccionado.';
+    fileNameElement.textContent = t('file.none');
     resetDetectedOptions();
     clearPageSelectionState();
     clearPreview();
-    setStatus('Carga un archivo para que la aplicación detecte automáticamente la conversión disponible.');
+    setStatus(t('status.idle'));
     return;
   }
 
@@ -504,7 +533,7 @@ function handleSelectedFile(file: File | null): void {
     resetDetectedOptions();
     clearPageSelectionState();
     clearPreview();
-    setStatus('Formato no compatible. Usa un archivo .elpx, .docx o .md.', true);
+    setStatus(t('status.unsupported'), true);
     return;
   }
 
@@ -568,23 +597,23 @@ function syncDetectedMessage(): void {
   detectedField.hidden = false;
 
   if (selectedKind === 'docx') {
-    detectedHelp.innerHTML = 'Se importará el archivo <code>.docx</code> para generar un proyecto <code>.elpx</code>.';
-    setStatus('Archivo DOCX detectado. Revisa la estructura de páginas y pulsa convertir.');
+    detectedHelp.innerHTML = t('detected.docxToElpx');
+    setStatus(t('status.docxDetected'));
     return;
   }
 
   if (selectedKind === 'markdown') {
-    detectedHelp.innerHTML = 'Se importará el archivo <code>.md</code> para generar un proyecto <code>.elpx</code>.';
-    setStatus('Archivo Markdown detectado. Revisa la estructura de páginas y pulsa convertir.');
+    detectedHelp.innerHTML = t('detected.mdToElpx');
+    setStatus(t('status.mdDetected'));
     return;
   }
 
   const outputKind = getSelectedElpxOutputKind();
   detectedHelp.innerHTML =
     outputKind === 'markdown'
-      ? 'Se exportará el archivo <code>.elpx</code> a <code>.md</code>.'
-      : 'Se exportará el archivo <code>.elpx</code> a <code>.docx</code>.';
-  setStatus('Archivo ELPX detectado. Elige formato y páginas, y pulsa convertir.');
+      ? t('detected.elpxToMd')
+      : t('detected.elpxToDocx');
+  setStatus(t('status.elpxDetected'));
 }
 
 function syncStructureControls(): void {
@@ -595,16 +624,16 @@ function syncStructureControls(): void {
 
   const heading1UsesResourceTitle = heading1Mode.value === 'resource';
   if (heading1UsesResourceTitle) {
-    setForcedPageSelectState(heading2Mode, 'Página (obligatorio)');
+    setForcedPageSelectState(heading2Mode, t('structure.h1.forcedPage'));
   } else {
-    setDependentSelectState(heading2Mode, true, 'iDevice de texto');
+    setDependentSelectState(heading2Mode, true, t('structure.block'));
   }
 
   const heading2UsesPages = heading1UsesResourceTitle || heading2Mode.value === 'page';
-  setDependentSelectState(heading3Mode, heading2UsesPages, 'Subtítulo dentro del iDevice actual');
+  setDependentSelectState(heading3Mode, heading2UsesPages, t('structure.disabledNested'));
 
   const heading3UsesPages = heading2UsesPages && heading3Mode.value === 'page';
-  setDependentSelectState(heading4Mode, heading3UsesPages, 'Subtítulo dentro del iDevice actual');
+  setDependentSelectState(heading4Mode, heading3UsesPages, t('structure.disabledNested'));
 }
 
 function syncOutputControls(): void {
@@ -645,8 +674,8 @@ function setDependentSelectState(
 
   const currentValue = selectElement.value === 'page' ? 'page' : 'block';
   selectElement.innerHTML = `
-    <option value="block">iDevice de texto</option>
-    <option value="page">Subpágina</option>
+    <option value="block">${t('structure.block')}</option>
+    <option value="page">${t('structure.subpage')}</option>
   `;
   selectElement.value = currentValue;
   selectElement.disabled = false;
@@ -666,8 +695,8 @@ function setStatus(message: string, isError = false): void {
 function setBusyState(isBusy: boolean): void {
   previewButton.classList.toggle('is-loading', isBusy);
   submitButton.classList.toggle('is-loading', isBusy);
-  setButtonLabel(previewButton, isBusy ? 'Trabajando...' : idlePreviewLabel);
-  setButtonLabel(submitButton, isBusy ? 'Trabajando...' : idleSaveLabel);
+  setButtonLabel(previewButton, isBusy ? t('button.working') : idlePreviewLabel);
+  setButtonLabel(submitButton, isBusy ? t('button.working') : idleSaveLabel);
   previewButton.disabled = isBusy;
   submitButton.disabled = isBusy;
   statusSpinner.hidden = !isBusy;
@@ -701,6 +730,13 @@ function updateProgress(progress: ConvertProgress | DocxImportProgress): void {
   };
 
   setProgress(phasePercent[progress.phase] || 10);
+}
+
+function toLocalizedProgressMessage(progress: ConvertProgress | DocxImportProgress): string {
+  if (progress.messageKey) {
+    return t(progress.messageKey);
+  }
+  return progress.message;
 }
 
 function setProgress(percent: number): void {
@@ -737,7 +773,7 @@ async function prepareSaveTarget(options: {
     return { handle, filename: suggestedName };
   } catch (error) {
     if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new Error('Guardado cancelado por el usuario.');
+      throw new Error(t('error.saveCancelled'));
     }
   }
 
@@ -768,7 +804,7 @@ function downloadBlob(blob: Blob, filename: string): void {
 }
 
 function toOutputFilename(inputFilename: string, extension: '.docx' | '.elpx' | '.md'): string {
-  const stem = inputFilename.replace(/\.[^.]+$/, '') || 'documento';
+  const stem = inputFilename.replace(/\.[^.]+$/, '') || 'document';
   return `${stem}${extension}`;
 }
 
@@ -802,9 +838,9 @@ function clearPreview(): void {
 
 async function inspectSelectedElpxPages(file: File): Promise<void> {
   const inspectionId = ++pageInspectionSequence;
-  setStatus('Leyendo estructura de páginas del ELPX...');
+  setStatus(t('status.readingPages'));
   pageSelectionList.innerHTML = '';
-  pageSelectionHelp.textContent = 'Cargando páginas...';
+  pageSelectionHelp.textContent = t('pages.help.loading');
 
   try {
     const pages = await inspectElpxPages(file);
@@ -824,7 +860,7 @@ async function inspectSelectedElpxPages(file: File): Promise<void> {
     availableElpxPages = [];
     selectedElpxPages.clear();
     pageSelectionList.innerHTML = '';
-    pageSelectionHelp.textContent = 'No se ha podido leer la estructura de páginas. Se exportará todo el contenido.';
+    pageSelectionHelp.textContent = t('pages.help.readError');
   } finally {
     if (inspectionId === pageInspectionSequence) {
       syncDetectedMessage();
@@ -835,7 +871,7 @@ async function inspectSelectedElpxPages(file: File): Promise<void> {
 function renderPageSelectionList(): void {
   if (availableElpxPages.length === 0) {
     pageSelectionList.innerHTML = '';
-    pageSelectionHelp.textContent = 'No se han detectado páginas seleccionables. Se exportará todo el contenido.';
+    pageSelectionHelp.textContent = t('pages.help.noneDetected');
     return;
   }
 
@@ -859,7 +895,7 @@ function refreshPageSelectionHelp(): void {
   }
 
   const selectedCount = selectedElpxPages.size;
-  pageSelectionHelp.innerHTML = `${selectedCount} de ${availableElpxPages.length} páginas seleccionadas. Modo jerárquico normalizado: si falta una página padre seleccionada, sus hijas pasan a raíz.`;
+  pageSelectionHelp.innerHTML = t('pages.help.summary', { selected: selectedCount, total: availableElpxPages.length });
 }
 
 function getSelectedElpxPageIds(): string[] | undefined {
@@ -874,7 +910,7 @@ function clearPageSelectionState(): void {
   availableElpxPages = [];
   selectedElpxPages.clear();
   pageSelectionList.innerHTML = '';
-  pageSelectionHelp.textContent = 'Modo jerárquico normalizado: si falta una página padre seleccionada, sus hijas pasan a raíz.';
+  pageSelectionHelp.textContent = t('pages.help');
   invalidatePreparedConversion();
 }
 
@@ -907,7 +943,7 @@ async function prepareCurrentConversion(file: File, kind: InputKind): Promise<Pr
   const selectedPageIds = getSelectedElpxPageIds();
   const selectedPageCount = selectedPageIds?.length ?? availableElpxPages.length;
   if (kind === 'elpx' && availableElpxPages.length > 0 && selectedPageCount === 0) {
-    throw new Error('Selecciona al menos una página para exportar.');
+    throw new Error(t('error.selectAtLeastOnePage'));
   }
 
   if (kind === 'docx' || kind === 'markdown') {
@@ -915,14 +951,14 @@ async function prepareCurrentConversion(file: File, kind: InputKind): Promise<Pr
       kind === 'docx'
         ? await convertDocxToElpx(file, getHeadingOptions(), progress => {
             updateProgress(progress);
-            setStatus(progress.message);
+            setStatus(toLocalizedProgressMessage(progress));
           })
         : await convertMarkdownToElpx(file, getHeadingOptions(), progress => {
             updateProgress(progress);
-            setStatus(progress.message);
+            setStatus(toLocalizedProgressMessage(progress));
           });
 
-    setStatus('Generando vista previa del ELPX...');
+    setStatus(t('status.generatingElpxPreview'));
     const previewHtml = importResult.previewHtml;
 
     return {
@@ -946,7 +982,7 @@ async function prepareCurrentConversion(file: File, kind: InputKind): Promise<Pr
       { includeImages: markdownImages.checked, selectedPageIds },
       progress => {
         updateProgress(progress);
-        setStatus(progress.message);
+        setStatus(toLocalizedProgressMessage(progress));
       },
     );
 
@@ -966,7 +1002,7 @@ async function prepareCurrentConversion(file: File, kind: InputKind): Promise<Pr
     { selectedPageIds },
     progress => {
       updateProgress(progress);
-      setStatus(progress.message);
+      setStatus(toLocalizedProgressMessage(progress));
     },
   );
 
@@ -1014,7 +1050,7 @@ function renderPreview(conversion: PreparedConversion): void {
 function openPreviewInWindow(conversion: PreparedConversion): void {
   const previewWindow = window.open('', '_blank', 'popup=yes,width=1100,height=760,resizable=yes,scrollbars=yes');
   if (!previewWindow) {
-    setStatus('No se pudo abrir la ventana de vista previa (bloqueador de ventanas emergentes).', true);
+    setStatus(t('status.popupBlocked'), true);
     return;
   }
 
@@ -1077,7 +1113,7 @@ function buildPagedPreviewDocument(pages: Record<string, string>, startPath: str
     .replace(/&/g, '\\u0026');
 
   return `<!doctype html>
-<html lang="es">
+<html lang="${escapeAttribute(locale)}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1088,7 +1124,7 @@ function buildPagedPreviewDocument(pages: Record<string, string>, startPath: str
   </style>
 </head>
 <body>
-  <iframe id="preview-frame" title="Vista previa del ELPX"></iframe>
+  <iframe id="preview-frame" title="${escapeAttribute(t('preview.pagedFrameTitle'))}"></iframe>
   <script>
     const pages = ${serializedPages};
     let currentPath = ${JSON.stringify(safeStartPath)};
@@ -1177,7 +1213,7 @@ function normalizeVirtualPreviewPath(path: string): string {
 
 function buildMarkdownPreviewDocument(markdown: string, title: string): string {
   return `<!doctype html>
-<html lang="es">
+<html lang="${escapeAttribute(locale)}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -1197,7 +1233,7 @@ async function prepareSaveTargetForKind(inputFilename: string, kind: ConversionK
   if (kind === 'elpx') {
     return prepareSaveTarget({
       inputFilename,
-      description: 'Proyecto de eXeLearning',
+      description: t('save.type.elpx'),
       mime: 'application/zip',
       extension: '.elpx',
     });
@@ -1206,7 +1242,7 @@ async function prepareSaveTargetForKind(inputFilename: string, kind: ConversionK
   if (kind === 'markdown') {
     return prepareSaveTarget({
       inputFilename,
-      description: 'Documento Markdown',
+      description: t('save.type.md'),
       mime: 'text/markdown',
       extension: '.md',
     });
@@ -1214,7 +1250,7 @@ async function prepareSaveTargetForKind(inputFilename: string, kind: ConversionK
 
   return prepareSaveTarget({
     inputFilename,
-    description: 'Documento de Word',
+    description: t('save.type.docx'),
     mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     extension: '.docx',
   });

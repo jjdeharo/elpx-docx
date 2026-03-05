@@ -30,11 +30,11 @@ export async function convertMarkdownToElpx(
   options: DocxImportOptions,
   onProgress?: (progress: DocxImportProgress) => void,
 ): Promise<ImportToElpxResult> {
-  onProgress?.({ phase: 'read', message: 'Leyendo el archivo Markdown...' });
+  onProgress?.({ phase: 'read', message: 'Leyendo el archivo Markdown...', messageKey: 'progress.readMarkdown' });
   const source = await file.text();
 
-  onProgress?.({ phase: 'parse', message: 'Convirtiendo Markdown a HTML...' });
+  onProgress?.({ phase: 'parse', message: 'Convirtiendo Markdown a HTML...', messageKey: 'progress.markdownToHtml' });
   const html = markdown.render(source);
 
-  return convertHtmlToElpx(html, file.name, options, onProgress, 'Interpretando la estructura del Markdown...');
+  return convertHtmlToElpx(html, file.name, options, onProgress, 'progress.parseMarkdownStructure');
 }

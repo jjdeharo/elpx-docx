@@ -57,6 +57,7 @@ code {
 }
 
 .hero {
+  position: relative;
   padding: clamp(18px, 4vw, 28px);
   background:
     linear-gradient(180deg, rgba(95, 155, 61, 0.08) 0, rgba(95, 155, 61, 0) 72px),
@@ -129,6 +130,23 @@ h2 {
   line-height: 1.5;
   color: var(--muted);
   font-size: 1rem;
+}
+
+.locale-picker {
+  margin-top: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.locale-picker select {
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: #fff;
+  color: var(--ink);
 }
 
 .form {
@@ -578,7 +596,30 @@ button:disabled {
     flex-basis: 50px;
   }
 
+  .locale-picker {
+    position: static;
+    margin-top: 10px;
+  }
+
   input[type='file'] {
     padding: 14px;
+  }
+}
+
+@media (min-width: 900px) {
+  .hero {
+    padding-right: 220px;
+  }
+
+  .locale-picker {
+    position: absolute;
+    top: 18px;
+    right: 24px;
+    margin-top: 0;
+  }
+
+  .lede {
+    max-width: none;
+    white-space: nowrap;
   }
 }
