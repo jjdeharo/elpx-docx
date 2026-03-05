@@ -58,6 +58,8 @@ interface PreviewPageInfo {
   parentIndex: number | null;
 }
 
+const EXECONVERT_SIGNATURE = 'eXeConvert v0.1.0-beta.3';
+
 export async function convertDocxToElpx(
   file: File,
   options: DocxImportOptions,
@@ -698,6 +700,7 @@ function generateContentXml(project: ImportedProject): string {
   const odeId = createResourceId();
   const odeVersionId = createResourceId();
   const modified = String(Date.now());
+  const generatedAtIso = new Date().toISOString();
   const pageIds = project.pages.map(() => createPageId());
   const navStructuresXml = project.pages
     .map((page, index) => generateOdeNavStructureXml(page, index, pageIds))
@@ -733,6 +736,8 @@ function generateContentXml(project: ImportedProject): string {
   <odeProperty><key>pp_addMathJax</key><value>true</value></odeProperty>
   <odeProperty><key>exportSource</key><value>true</value></odeProperty>
   <odeProperty><key>pp_globalFont</key><value>default</value></odeProperty>
+  <odeProperty><key>execonvert_generator</key><value>${escapeXml(EXECONVERT_SIGNATURE)}</value></odeProperty>
+  <odeProperty><key>execonvert_generatedAt</key><value>${escapeXml(generatedAtIso)}</value></odeProperty>
 </odeProperties>
 <odeNavStructures>
 ${navStructuresXml}</odeNavStructures>
