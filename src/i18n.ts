@@ -11,7 +11,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
 
     'app.heroAria': 'Cabecera de la aplicación',
     'app.subtitle': 'Conversor para eXeLearning',
-    'app.lede': 'Convierte archivos <code>.elp</code> y <code>.elpx</code> a <code>.docx</code> o <code>.md</code>, y también importa <code>.docx</code> o <code>.md</code> a <code>.elpx</code>, directamente en el navegador y sin subir archivos a ningún servidor.',
+    'app.lede': 'Convierte archivos <code>.elp</code> y <code>.elpx</code> a <code>.docx</code> o <code>.md</code>, y también importa <code>.docx</code> o <code>.md</code> a <code>.elpx</code>.',
+    'app.infographicLink': 'Ver infografía',
     'panel.conversion': 'Conversión',
 
     'drop.title': 'Suelta aquí un archivo o selecciónalo',
@@ -158,7 +159,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
 
     'app.heroAria': 'Capçalera de l’aplicació',
     'app.subtitle': 'Convertidor per a eXeLearning',
-    'app.lede': 'Converteix fitxers <code>.elp</code> i <code>.elpx</code> a <code>.docx</code> o <code>.md</code>, i també importa <code>.docx</code> o <code>.md</code> a <code>.elpx</code>, directament al navegador i sense pujar fitxers a cap servidor.',
+    'app.lede': 'Converteix fitxers <code>.elp</code> i <code>.elpx</code> a <code>.docx</code> o <code>.md</code>, i també importa <code>.docx</code> o <code>.md</code> a <code>.elpx</code>.',
+    'app.infographicLink': 'Veure infografia',
     'panel.conversion': 'Conversió',
 
     'drop.title': 'Deixa anar aquí un fitxer o selecciona’l',
@@ -305,7 +307,8 @@ const dictionaries: Record<Locale, Record<string, string>> = {
 
     'app.heroAria': 'Application header',
     'app.subtitle': 'Converter for eXeLearning',
-    'app.lede': 'Convert <code>.elp</code> and <code>.elpx</code> files to <code>.docx</code> or <code>.md</code>, and also import <code>.docx</code> or <code>.md</code> into <code>.elpx</code>, directly in the browser without uploading files to any server.',
+    'app.lede': 'Convert <code>.elp</code> and <code>.elpx</code> files to <code>.docx</code> or <code>.md</code>, and also import <code>.docx</code> or <code>.md</code> into <code>.elpx</code>.',
+    'app.infographicLink': 'View infographic',
     'panel.conversion': 'Conversion',
 
     'drop.title': 'Drop a file here or choose one',

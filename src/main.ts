@@ -87,25 +87,29 @@ if (!document.querySelector(`link[href="${materialSymbolsHref}"]`)) {
 app.innerHTML = `
   <main class="shell">
     <section class="hero" aria-label="${escapeAttribute(t('app.heroAria'))}">
-      <div class="brand">
-        <span class="brand-mark" aria-hidden="true">
-          <img src="./favicon.svg" alt="" />
-        </span>
-        <div class="brand-copy">
-          <h1>eXeConvert</h1>
-          <p class="subtitle">${t('app.subtitle')}</p>
+      <div class="hero-top">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">
+            <img src="./favicon.svg" alt="" />
+          </span>
+          <div class="brand-copy">
+            <h1>eXeConvert</h1>
+            <p class="subtitle">${t('app.subtitle')}</p>
+          </div>
         </div>
-      </div>
-      <div class="locale-picker">
-        <label for="language-select">${t('lang.label')}</label>
-        <select id="language-select">
-          <option value="es" ${locale === 'es' ? 'selected' : ''}>${t('lang.es')}</option>
-          <option value="ca" ${locale === 'ca' ? 'selected' : ''}>${t('lang.ca')}</option>
-          <option value="en" ${locale === 'en' ? 'selected' : ''}>${t('lang.en')}</option>
-        </select>
+        <div class="locale-picker">
+          <select id="language-select" aria-label="${escapeAttribute(t('lang.label'))}">
+            <option value="es" ${locale === 'es' ? 'selected' : ''}>${t('lang.es')}</option>
+            <option value="ca" ${locale === 'ca' ? 'selected' : ''}>${t('lang.ca')}</option>
+            <option value="en" ${locale === 'en' ? 'selected' : ''}>${t('lang.en')}</option>
+          </select>
+        </div>
       </div>
       <p class="lede">
         ${t('app.lede')}
+      </p>
+      <p class="hero-links">
+        <a href="./info/index.html?lang=${locale}" target="_blank" rel="noopener">${t('app.infographicLink')}</a>
       </p>
     </section>
 

@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>eXeConvert</title>
+    <style>
+      :root {
+        --bg: #f3f7ef;
+        --panel: rgba(255, 255, 255, 0.92);
+        --line: #bfd0b7;
+        --ink: #243024;
+        --muted: #5b685a;
+        --brand: #5f9b3d;
+        --brand-dark: #2f5d2f;
+        --brand-soft: #e2eedb;
+        --arrow-in: #78b757;
+        --arrow-out: #2d6c4d;
+        --word: #185abd;
+        --word-dark: #0d3f90;
+        --md: #111111;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Candara, "Trebuchet MS", "Gill Sans", sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 82% 12%, rgba(95, 155, 61, 0.12), transparent 18rem),
+          radial-gradient(circle at 10% 88%, rgba(95, 155, 61, 0.08), transparent 16rem),
+          linear-gradient(180deg, #f8fbf6 0%, var(--bg) 100%);
+      }
+
+      .wrap {
+        width: min(1240px, calc(100% - 52px));
+        margin: 0 auto;
+        padding: 26px 0 34px;
+      }
+
+      .hero {
+        margin-bottom: 22px;
+      }
+
+      .logo-row-hero {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        margin-bottom: 6px;
+      }
+
+      .capture-trigger {
+        appearance: none;
+        border: 0;
+        padding: 0;
+        margin: 0;
+        background: transparent;
+        border-radius: 18px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition:
+          transform 140ms ease,
+          box-shadow 140ms ease,
+          background-color 140ms ease;
+      }
+
+      .capture-trigger:hover,
+      .capture-trigger:focus-visible {
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(53, 77, 47, 0.14);
+        background: rgba(255, 255, 255, 0.58);
+        outline: none;
+      }
+
+      .capture-trigger:active {
+        transform: translateY(0);
+      }
+
+      .hero-icon {
+        width: clamp(3.2rem, 7vw, 5rem);
+        height: clamp(3.2rem, 7vw, 5rem);
+        flex-shrink: 0;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(3.4rem, 7vw, 5.5rem);
+        line-height: 0.94;
+        letter-spacing: -0.05em;
+        color: var(--brand-dark);
+      }
+
+      .subtitle {
+        margin: 14px 0 0;
+        max-width: 54rem;
+        font-size: clamp(1.1rem, 2vw, 1.55rem);
+        line-height: 1.35;
+        color: var(--muted);
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 1fr 360px 1fr;
+        gap: 52px;
+        align-items: stretch;
+      }
+
+      .lane {
+        display: grid;
+        gap: 14px;
+        align-content: start;
+      }
+
+      .lane-title {
+        margin: 0 0 4px;
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--brand-dark);
+      }
+
+      .card {
+        position: relative;
+        min-height: 154px;
+        padding: 24px 22px 24px 104px;
+        border: 2px solid var(--line);
+        border-radius: 26px;
+        background: var(--panel);
+        box-shadow: 0 14px 30px rgba(53, 77, 47, 0.07);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .card h2 {
+        margin: 0 0 10px;
+        font-size: 1.46rem;
+        line-height: 1.05;
+        color: var(--brand-dark);
+      }
+
+      .card p {
+        margin: 0;
+        font-size: 0.98rem;
+        line-height: 1.32;
+        color: var(--muted);
+      }
+
+      .format-icon {
+        position: absolute;
+        left: 20px;
+        top: 20px;
+        width: 62px;
+        height: 62px;
+        display: grid;
+        place-items: center;
+        border-radius: 16px;
+        background: rgba(255, 255, 255, 0.72);
+        box-shadow: inset 0 0 0 1px rgba(47, 93, 47, 0.08);
+      }
+
+      .format-icon img {
+        display: block;
+        max-width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+      }
+
+      .format-icon.md img {
+        max-width: 84%;
+        max-height: 84%;
+      }
+
+      .arrow-in,
+      .arrow-out {
+        position: absolute;
+        top: 50%;
+        width: 48px;
+        height: 20px;
+        transform: translateY(-50%);
+        overflow: visible;
+      }
+
+      .left .card .arrow-in {
+        right: -50px;
+      }
+
+      .right .card .arrow-out {
+        left: -50px;
+      }
+
+      .center {
+        align-self: center;
+        display: grid;
+        gap: 24px;
+        padding: 48px 32px;
+        border-radius: 38px;
+        background: linear-gradient(155deg, #6aa844 0%, #46792c 100%);
+        box-shadow: 0 25px 50px rgba(53, 77, 47, 0.22);
+        color: white;
+      }
+
+      .brand-row {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        min-width: 0;
+      }
+
+      .brand-icon {
+        width: 48px;
+        height: 48px;
+        flex: 0 0 48px;
+        display: block;
+      }
+
+      .center .brand {
+        margin: 0;
+        font-size: 3.1rem;
+        line-height: 0.95;
+        font-weight: 800;
+        letter-spacing: -0.05em;
+        text-align: center;
+      }
+
+      .center p {
+        margin: 0;
+        font-size: 1.05rem;
+        line-height: 1.4;
+        text-align: center;
+        color: rgba(255, 255, 255, 0.92);
+      }
+
+      .lane.right {
+        align-content: center;
+      }
+
+      .pill {
+        padding: 14px 22px;
+        border-radius: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.25);
+        background: rgba(255, 255, 255, 0.12);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        margin-top: 10px;
+      }
+
+      .pill-icon {
+        width: 52px;
+        height: 52px;
+        background: white;
+        padding: 8px;
+        border-radius: 14px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        flex-shrink: 0;
+      }
+
+      .pill-icon img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+      }
+
+      .pill strong {
+        display: block;
+        font-size: 2.4rem;
+        line-height: 1;
+        font-family: "IBM Plex Mono", Consolas, monospace;
+      }
+
+      .pill strong code {
+        background: transparent;
+        padding: 0;
+      }
+
+      .footer-info {
+        margin-top: 40px;
+        margin-bottom: 20px;
+        text-align: center;
+      }
+
+      .disclaimer {
+        margin-bottom: 14px;
+        font-size: 0.9rem;
+        line-height: 1.4;
+        color: var(--muted);
+        max-width: 720px;
+        margin-left: auto;
+        margin-right: auto;
+        padding: 0 20px;
+      }
+
+      .url {
+        display: inline-block;
+        padding: 12px 24px;
+        border: 2px solid var(--line);
+        border-radius: 20px;
+        background: var(--brand-soft);
+      }
+
+      .url a {
+        color: var(--brand-dark);
+        text-decoration: none;
+        font-size: 1.15rem;
+        font-weight: 700;
+      }
+
+      .attribution {
+        margin-top: 22px;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        color: var(--muted);
+        opacity: 0.8;
+      }
+
+      svg {
+        display: block;
+      }
+
+      @media (max-width: 1120px) {
+        .layout {
+          grid-template-columns: 1fr;
+          gap: 36px;
+        }
+
+        .arrow-in,
+        .arrow-out {
+          display: none;
+        }
+
+        .center {
+          order: -1;
+          width: 100%;
+          max-width: 440px;
+          margin: 0 auto;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .wrap {
+          width: min(100% - 22px, 1320px);
+          padding-top: 22px;
+        }
+
+        .card {
+          min-height: 146px;
+          padding: 18px 18px 18px 96px;
+          border-radius: 24px;
+        }
+
+        .format-icon {
+          left: 18px;
+          top: 18px;
+          width: 56px;
+          height: 56px;
+        }
+
+        .brand-row {
+          gap: 8px;
+        }
+
+        .brand-icon {
+          width: 34px;
+          height: 34px;
+          flex-basis: 34px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="wrap" id="capture-root">
+      <header class="hero">
+        <div class="logo-row-hero">
+          <button
+            class="capture-trigger"
+            id="capture-button"
+            type="button"
+            aria-label="Descargar una captura PNG de esta página"
+            title="Descargar captura PNG"
+          >
+            <img class="hero-icon" src="./execonvert-icon.svg" alt="" />
+          </button>
+          <h1>eXeConvert</h1>
+        </div>
+        <p class="subtitle" id="info-subtitle">Convierte proyectos de eXeLearning en el navegador.</p>
+      </header>
+
+      <section class="layout" id="info-layout" aria-label="Qué hace eXeConvert">
+        <section class="lane left">
+          <h2 class="lane-title" id="info-input-title">Entrada</h2>
+
+          <article class="card">
+            <div class="format-icon" aria-hidden="true">
+              <img src="./exe-old.png" alt="" />
+            </div>
+            <h2><code>.elp</code></h2>
+            <p id="info-elp-input">Proyectos de la versión 2 que se migran al formato actual.</p>
+            <svg class="arrow-in" viewBox="0 0 50 20" aria-hidden="true">
+              <path d="M2 10H32" stroke="#78b757" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M30 2l16 8-16 8V2z" fill="#78b757"/>
+            </svg>
+          </article>
+
+          <article class="card">
+            <div class="format-icon" aria-hidden="true">
+              <img src="./docx.svg" alt="" />
+            </div>
+            <h2><code>.docx</code></h2>
+            <p id="info-docx-input">Documento Word que se importa como proyecto editable.</p>
+            <svg class="arrow-in" viewBox="0 0 50 20" aria-hidden="true">
+              <path d="M2 10H32" stroke="#78b757" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M30 2l16 8-16 8V2z" fill="#78b757"/>
+            </svg>
+          </article>
+
+          <article class="card">
+            <div class="format-icon md" aria-hidden="true">
+              <img src="./markdown.svg" alt="" />
+            </div>
+            <h2><code>.md</code></h2>
+            <p id="info-md-input">Markdown que se importa como proyecto <code>.elpx</code>.</p>
+            <svg class="arrow-in" viewBox="0 0 50 20" aria-hidden="true">
+              <path d="M2 10H32" stroke="#78b757" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M30 2l16 8-16 8V2z" fill="#78b757"/>
+            </svg>
+          </article>
+        </section>
+
+        <section class="center">
+          <div class="brand-row">
+            <img class="brand-icon" src="./execonvert-icon.svg" alt="" />
+            <h2 class="brand">eXeConvert</h2>
+          </div>
+          <p id="info-center-line-1">Todo en local, sin subir archivos.</p>
+          <p id="info-center-line-2">Convierte, guarda y sigue trabajando desde un único formato central.</p>
+          <div class="pill">
+            <div class="pill-icon" aria-hidden="true">
+              <img src="./elpx-icon.png" alt="" />
+            </div>
+            <strong><code>.elpx</code></strong>
+          </div>
+        </section>
+
+        <section class="lane right">
+          <h2 class="lane-title" id="info-output-title">Salida</h2>
+
+          <article class="card">
+            <div class="format-icon" aria-hidden="true">
+              <img src="./docx.svg" alt="" />
+            </div>
+            <h2><code>.docx</code></h2>
+            <p id="info-docx-output">Exportación desde <code>.elpx</code> a Word.</p>
+            <svg class="arrow-out" viewBox="0 0 50 20" aria-hidden="true">
+              <path d="M2 10H32" stroke="#2d6c4d" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M30 2l16 8-16 8V2z" fill="#2d6c4d"/>
+            </svg>
+          </article>
+
+          <article class="card">
+            <div class="format-icon md" aria-hidden="true">
+              <img src="./markdown.svg" alt="" />
+            </div>
+            <h2><code>.md</code></h2>
+            <p id="info-md-output">Exportación desde <code>.elpx</code> a Markdown.</p>
+            <svg class="arrow-out" viewBox="0 0 50 20" aria-hidden="true">
+              <path d="M2 10H32" stroke="#2d6c4d" stroke-width="3.5" stroke-linecap="round"/>
+              <path d="M30 2l16 8-16 8V2z" fill="#2d6c4d"/>
+            </svg>
+          </article>
+        </section>
+      </section>
+
+      <footer class="footer-info">
+        <p class="disclaimer" id="info-disclaimer">
+          La interactividad de iDevices no se puede exportar debido a las limitaciones técnicas de los formatos de destino (Word y Markdown).
+        </p>
+        <section class="url" id="info-url-label" aria-label="URL pública">
+          <a href="https://jjdeharo.github.io/eXeConvert/">https://jjdeharo.github.io/eXeConvert/</a>
+        </section>
+        <p class="attribution" id="info-attribution">
+          Proyecto independiente. eXeLearning y sus logotipos se usan aqui solo con fines identificativos. No existe afiliacion ni respaldo oficial por parte del proyecto eXeLearning.
+        </p>
+      </footer>
+    </main>
+    <script src="https://cdn.jsdelivr.net/npm/html-to-image@1.11.11/dist/html-to-image.js"></script>
+    <script>
+      const STORAGE_KEY = "execonvert.locale";
+      const SUPPORTED_LOCALES = ["es", "ca", "en"];
+      const infoTranslations = {
+        es: {
+          subtitle: "Convierte proyectos de eXeLearning en el navegador.",
+          layoutAria: "Que hace eXeConvert",
+          inputTitle: "Entrada",
+          outputTitle: "Salida",
+          elpInput: "Proyectos de la version 2 que se migran al formato actual.",
+          docxInput: "Documento Word que se importa como proyecto editable.",
+          mdInput: "Markdown que se importa como proyecto <code>.elpx</code>.",
+          centerLine1: "Todo en local, sin subir archivos.",
+          centerLine2: "Convierte, guarda y sigue trabajando desde un unico formato central.",
+          docxOutput: "Exportacion desde <code>.elpx</code> a Word.",
+          mdOutput: "Exportacion desde <code>.elpx</code> a Markdown.",
+          disclaimer:
+            "La interactividad de iDevices no se puede exportar debido a las limitaciones tecnicas de los formatos de destino (Word y Markdown).",
+          attribution:
+            "Proyecto independiente. eXeLearning y sus logotipos se usan aqui solo con fines identificativos. No existe afiliacion ni respaldo oficial por parte del proyecto eXeLearning.",
+          pageTitle: "eXeConvert",
+          captureTitle: "Descargar captura PNG",
+          captureAria: "Descargar una captura PNG de esta pagina",
+          captureBusy: "Generando captura...",
+          captureError: "No se pudo generar la captura PNG en este navegador.",
+          publicUrlAria: "URL publica"
+        },
+        ca: {
+          subtitle: "Converteix projectes d'eXeLearning al navegador.",
+          layoutAria: "Que fa eXeConvert",
+          inputTitle: "Entrada",
+          outputTitle: "Sortida",
+          elpInput: "Projectes de la versio 2 que es migren al format actual.",
+          docxInput: "Document Word que s'importa com a projecte editable.",
+          mdInput: "Markdown que s'importa com a projecte <code>.elpx</code>.",
+          centerLine1: "Tot en local, sense pujar fitxers.",
+          centerLine2: "Converteix, desa i continua treballant des d'un unic format central.",
+          docxOutput: "Exportacio des de <code>.elpx</code> a Word.",
+          mdOutput: "Exportacio des de <code>.elpx</code> a Markdown.",
+          disclaimer:
+            "La interactivitat dels iDevices no es pot exportar a causa de les limitacions tecniques dels formats de destinacio (Word i Markdown).",
+          attribution:
+            "Projecte independent. eXeLearning i els seus logotips s'utilitzen aqui nomes amb finalitats identificatives. No hi ha afiliacio ni suport oficial per part del projecte eXeLearning.",
+          pageTitle: "eXeConvert",
+          captureTitle: "Descarregar captura PNG",
+          captureAria: "Descarregar una captura PNG d'aquesta pagina",
+          captureBusy: "Generant captura...",
+          captureError: "No s'ha pogut generar la captura PNG en aquest navegador.",
+          publicUrlAria: "URL publica"
+        },
+        en: {
+          subtitle: "Convert eXeLearning projects in the browser.",
+          layoutAria: "What eXeConvert does",
+          inputTitle: "Input",
+          outputTitle: "Output",
+          elpInput: "Version 2 projects migrated to the current format.",
+          docxInput: "Word document imported as an editable project.",
+          mdInput: "Markdown imported as an <code>.elpx</code> project.",
+          centerLine1: "Everything stays local, with no uploads.",
+          centerLine2: "Convert, save, and keep working from a single central format.",
+          docxOutput: "Export from <code>.elpx</code> to Word.",
+          mdOutput: "Export from <code>.elpx</code> to Markdown.",
+          disclaimer:
+            "iDevice interactivity cannot be exported because of the technical limitations of the target formats (Word and Markdown).",
+          attribution:
+            "Independent project. eXeLearning and its logos are used here for identification purposes only. No official affiliation with or endorsement by the eXeLearning project is implied.",
+          pageTitle: "eXeConvert",
+          captureTitle: "Download PNG capture",
+          captureAria: "Download a PNG capture of this page",
+          captureBusy: "Generating capture...",
+          captureError: "The PNG capture could not be generated in this browser.",
+          publicUrlAria: "Public URL"
+        }
+      };
+
+      const captureButton = document.getElementById("capture-button");
+      const captureRoot = document.getElementById("capture-root");
+
+      function resolveLocale() {
+        const params = new URLSearchParams(window.location.search);
+        const queryLocale = params.get("lang");
+        if (SUPPORTED_LOCALES.includes(queryLocale)) {
+          return queryLocale;
+        }
+
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (SUPPORTED_LOCALES.includes(stored)) {
+          return stored;
+        }
+
+        const nav = (navigator.language || "es").toLowerCase();
+        if (nav.startsWith("ca")) return "ca";
+        if (nav.startsWith("en")) return "en";
+        return "es";
+      }
+
+      function applyTranslations(locale) {
+        const copy = infoTranslations[locale] || infoTranslations.es;
+        document.documentElement.lang = locale;
+        document.title = copy.pageTitle;
+
+        document.getElementById("info-subtitle").textContent = copy.subtitle;
+        document.getElementById("info-layout").setAttribute("aria-label", copy.layoutAria);
+        document.getElementById("info-input-title").textContent = copy.inputTitle;
+        document.getElementById("info-output-title").textContent = copy.outputTitle;
+        document.getElementById("info-elp-input").textContent = copy.elpInput;
+        document.getElementById("info-docx-input").textContent = copy.docxInput;
+        document.getElementById("info-md-input").innerHTML = copy.mdInput;
+        document.getElementById("info-center-line-1").textContent = copy.centerLine1;
+        document.getElementById("info-center-line-2").textContent = copy.centerLine2;
+        document.getElementById("info-docx-output").innerHTML = copy.docxOutput;
+        document.getElementById("info-md-output").innerHTML = copy.mdOutput;
+        document.getElementById("info-disclaimer").textContent = copy.disclaimer;
+        document.getElementById("info-attribution").textContent = copy.attribution;
+        document.getElementById("info-url-label").setAttribute("aria-label", copy.publicUrlAria);
+        captureButton?.setAttribute("title", copy.captureTitle);
+        captureButton?.setAttribute("aria-label", copy.captureAria);
+
+        return copy;
+      }
+
+      const activeLocale = resolveLocale();
+      const activeCopy = applyTranslations(activeLocale);
+
+      async function downloadCapture() {
+        if (!captureRoot) {
+          return;
+        }
+
+        const previousLabel = captureButton?.title || activeCopy.captureTitle;
+        if (captureButton) {
+          captureButton.disabled = true;
+          captureButton.title = activeCopy.captureBusy;
+        }
+
+        try {
+          const exportNode = captureRoot.cloneNode(true);
+          exportNode.id = "capture-export-clone";
+          exportNode.style.width = "1240px";
+          exportNode.style.margin = "0";
+          exportNode.style.padding = "26px 60px 34px";
+          exportNode.style.overflow = "visible";
+          exportNode.style.background =
+            "radial-gradient(circle at 82% 12%, rgba(95, 155, 61, 0.12), transparent 18rem), radial-gradient(circle at 10% 88%, rgba(95, 155, 61, 0.08), transparent 16rem), linear-gradient(180deg, #f8fbf6 0%, #f3f7ef 100%)";
+
+          const exportLayout = exportNode.querySelector(".layout");
+          if (exportLayout) {
+            exportLayout.style.overflow = "visible";
+          }
+
+          const exportCards = exportNode.querySelectorAll(".card");
+          for (const card of exportCards) {
+            card.style.overflow = "visible";
+          }
+
+          const staging = document.createElement("div");
+          staging.style.position = "fixed";
+          staging.style.left = "-20000px";
+          staging.style.top = "0";
+          staging.style.zIndex = "-1";
+          staging.style.pointerEvents = "none";
+          staging.style.background = "#f3f7ef";
+          staging.appendChild(exportNode);
+          document.body.appendChild(staging);
+
+          const width = Math.ceil(exportNode.scrollWidth);
+          const height = Math.ceil(exportNode.scrollHeight);
+
+          const dataUrl = await window.htmlToImage.toPng(exportNode, {
+            cacheBust: true,
+            pixelRatio: 2,
+            backgroundColor: "#f3f7ef",
+            skipFonts: true,
+            width,
+            height,
+            canvasWidth: width * 2,
+            canvasHeight: height * 2,
+            style: {
+              width: width + "px",
+              height: height + "px"
+            }
+          });
+
+          staging.remove();
+
+          const link = document.createElement("a");
+          link.href = dataUrl;
+          link.download = "execonvert.png";
+          link.click();
+        } catch (error) {
+          console.error("No se pudo generar la captura PNG", error);
+          alert(activeCopy.captureError);
+        } finally {
+          if (captureButton) {
+            captureButton.disabled = false;
+            captureButton.title = previousLabel;
+          }
+        }
+      }
+
+      captureButton?.addEventListener("click", downloadCapture);
+    </script>
+  </body>
+</html>
